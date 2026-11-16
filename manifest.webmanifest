@@ -1,20 +1,15 @@
 {
-  "name": "MTZ SZERELŐ – MESTERKÖNYV",
-  "short_name": "MTZ Szerelő",
+  "name": "MTZ PRO – Szerelési Mesterkönyv",
+  "short_name": "MTZ PRO",
+  "description": "MTZ szerelési tudástár, hibakereső és karbantartási ellenőrzőlista.",
+  "lang": "hu",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f1e8",
-  "theme_color": "#173b2a",
+  "background_color": "#101214",
+  "theme_color": "#111315",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
   ]
 }
