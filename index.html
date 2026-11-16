@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173b2a">
+<meta name="description" content="MTZ traktorok karbantartási és javítási tudástára.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<title>MTZ SZERELŐ – MESTERKÖNYV</title>
+<style>
+:root{--green:#173b2a;--green2:#245b3e;--cream:#f3f1e8;--ink:#17231b;--card:#fff;--muted:#647067;--line:#dce3dc}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(135deg,var(--green),var(--green2));color:white;padding:24px 18px 20px}
+.wrap{max-width:980px;margin:auto}h1{margin:0;font-size:clamp(24px,5vw,36px);letter-spacing:.3px}header p{margin:8px 0 0;color:#e0eee4}
+main{padding:18px}.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+select,input{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:white;font:inherit}
+.notice{background:#fff7dc;border:1px solid #ead99b;border-radius:12px;padding:13px;margin:14px 0;color:#594719;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 8px #173b2a0c}
+.card h2{font-size:18px;margin:0 0 7px}.card p{color:var(--muted);font-size:14px;margin:0 0 12px}
+button{border:0;border-radius:10px;background:var(--green2);color:white;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer}
+button.secondary{background:#e7eee8;color:var(--green)}
+#detail{display:none;margin-top:14px}.steps{padding-left:20px;line-height:1.6}.tag{display:inline-block;background:#e7eee8;color:var(--green);padding:4px 9px;border-radius:99px;font-size:12px;font-weight:700}
+footer{padding:22px;text-align:center;color:var(--muted);font-size:13px}
+@media(max-width:560px){.toolbar{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>🚜 MTZ SZERELŐ</h1><p>MESTERKÖNYV · Karbantartás, hibakeresés és javítási tudástár</p></div></header>
+<main class="wrap">
+  <div class="toolbar">
+    <select id="model" aria-label="Traktormodell">
+      <option value="all">Minden modell</option>
+      <option>MTZ-50</option><option>MTZ-80</option><option>MTZ-82</option>
+      <option>MTZ-892</option><option>MTZ-920</option><option>MTZ-952</option>
+      <option>MTZ-1025</option><option>MTZ-1221</option>
+    </select>
+    <input id="search" placeholder="Keresés: pl. kuplung, hidraulika…" aria-label="Keresés">
+  </div>
+  <div class="notice"><strong>Fontos műszaki figyelmeztetés:</strong> az egyes MTZ-változatok, évjáratok, motorok és váltók eltérhetnek. Nyomatékot, hézagot vagy beállítási értéket csak az adott kivitelhez ellenőrzött gyári adat alapján szabad megadni. Javítás előtt biztosítsd a traktort, állítsd le a motort, vedd ki a kulcsot, és tehermentesítsd a hidraulikát.</div>
+  <section class="grid" id="cards"></section>
+  <section class="card" id="detail">
+    <span class="tag" id="detailTag"></span><h2 id="detailTitle" style="margin-top:10px"></h2>
+    <p id="detailIntro"></p><ol class="steps" id="detailSteps"></ol>
+    <p><strong>Adatellenőrzés:</strong> ez az induló, általános tájékoztató rész. Konkrét szétszerelési sorrendhez, mérethez és meghúzási nyomatékhoz a pontos típushoz és kivitelhez tartozó gyári kézikönyvet kell használni.</p>
+    <button class="secondary" onclick="document.getElementById('detail').style.display='none'">Vissza a témákhoz</button>
+  </section>
+</main>
+<footer>MTZ SZERELŐ – MESTERKÖNYV · Induló kiadás · A tartalom típusonként folyamatosan bővíthető.</footer>
+<script>
+const topics=[
+{title:"Motor és kenési rendszer",desc:"Olajszint, szivárgás, hűtés és alapvető ellenőrzések.",models:["MTZ-50","MTZ-80","MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["Sík talajon állítsd le a traktort, várd meg, míg a motor biztonságosan lehűl.","Ellenőrizd az olajszintet a típushoz előírt eljárással és nívópálcával.","Vizsgáld át a látható olajcsöveket, tömítéseket és a szűrő környékét szivárgásra.","Olaj- és szűrőcsere esetén kizárólag a motorváltozathoz előírt kenőanyagot és szűrőt használd."]},
+{title:"Kuplung és hajtás",desc:"Kuplungcsúszás, nehéz kapcsolás – első ellenőrzések.",models:["MTZ-50","MTZ-80","MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["Állítsd le a motort, rögzítsd a traktort, és akadályozd meg az elgurulást.","Ellenőrizd a pedál szabad útját a pontos típus kézikönyve szerint.","Vizsgáld meg a rudazatot, csatlakozásokat és a látható szivárgásokat.","A kuplungszerkezet bontását és beállítását típusazonos műhelyutasítás alapján végezd."]},
+{title:"Sebességváltó",desc:"Kapcsolási nehézség, zaj és olajszivárgás.",models:["MTZ-50","MTZ-80","MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["Jegyezd fel, melyik fokozatban és milyen körülmények között jelentkezik a hiba.","Ellenőrizd az olajszintet és a szivárgásokat az adott váltókivitel előírása szerint.","Ne erőltesd a fokozatot, ha recsegés vagy rendellenes zaj jelentkezik.","Belső váltójavításhoz az adott váltóváltozat robbantott ábrája és gyári eljárása szükséges."]},
+{title:"Hidraulika és emelőmű",desc:"Lassú emelés, süllyedés, melegedés – hibakeresési alapok.",models:["MTZ-50","MTZ-80","MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["Engedd le a munkagépet a talajra, állítsd le a motort, és szüntesd meg a rendszer nyomását az előírás szerint.","Ellenőrizd a hidraulikaolaj szintjét és állapotát.","Nézd át a tömlőket, csatlakozókat és hengereket szivárgás miatt; nyomás alatt soha ne keresd kézzel a szivárgást.","Szivattyú-, szelep- vagy nyomásbeállítást csak megfelelő mérőeszközzel és gyári érték alapján végezz."]},
+{title:"Első híd és összkerékhajtás",desc:"MTZ-82 és 4×4 változatok ellenőrzése.",models:["MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["Biztosítsd a traktort, emelésnél használj megfelelő teherbírású bakokat.","Ellenőrizd a kerékcsapágyak, gömbcsuklók és kardáncsatlakozások holtjátékát.","Vizsgáld meg a hajtóművek olajszintjét a típus kézikönyve szerint.","A foghézag és csapágy-előfeszítés beállítása kivitel-specifikus művelet."]},
+{title:"Fékberendezés",desc:"Fékhatás, pedálút és szivárgás ellenőrzése.",models:["MTZ-50","MTZ-80","MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["A traktort sík, forgalomtól elzárt helyen rögzítsd.","Ellenőrizd a pedálok működését, a rögzítőféket és a látható alkatrészeket.","Szivárgás, félrehúzás vagy gyenge fékhatás esetén ne használd a traktort közúton vagy munkavégzésre.","A fék beállítását és javítását típusazonos műhelyutasítás szerint végezd."]},
+{title:"Elektromos rendszer",desc:"Akkumulátor, töltés, indítás és biztosítékok.",models:["MTZ-50","MTZ-80","MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["Elektromos munka előtt kapcsold le a gyújtást; akkumulátor bontásakor tartsd be a gyári sorrendet.","Ellenőrizd az akkumulátorsaruk tisztaságát és szorosságát.","Biztosítékot kizárólag az előírt értékűre cserélj; nagyobbra soha.","Töltési vagy indítási hiba esetén mérd meg az akkumulátor és a töltőrendszer értékeit a kapcsolási rajz alapján."]},
+{title:"Üzemanyag-ellátás",desc:"Levegősödés, szűrő és adagoló körüli hibák.",models:["MTZ-50","MTZ-80","MTZ-82","MTZ-892","MTZ-920","MTZ-952","MTZ-1025","MTZ-1221"],steps:["Dohányzás és nyílt láng nélkül, jól szellőző helyen dolgozz.","Ellenőrizd a szűrőházat, csöveket és csatlakozásokat szivárgásra.","Szűrőcsere és légtelenítés során kövesd az adott motor gyári eljárását.","Adagoló- és porlasztóbeállítást dízeladagoló műhelyben, megfelelő próbapadon végeztess."]}
+];
+function render(){
+ const model=document.getElementById('model').value, q=document.getElementById('search').value.toLocaleLowerCase('hu');
+ const list=topics.filter(t=>(model==='all'||t.models.includes(model))&&(t.title+' '+t.desc).toLocaleLowerCase('hu').includes(q));
+ const root=document.getElementById('cards');root.innerHTML='';
+ list.forEach((t)=>{const i=topics.indexOf(t),el=document.createElement('article');el.className='card';el.innerHTML=`<span class="tag">${model==='all'?'MTZ tudástár':model}</span><h2>${t.title}</h2><p>${t.desc}</p><button onclick="openTopic(${i})">Útmutató megnyitása</button>`;root.appendChild(el)});
+ if(!list.length)root.innerHTML='<div class="card">Nincs találat. Próbálj másik keresőszót vagy modellt.</div>';
+}
+function openTopic(i){const t=topics[i];document.getElementById('detailTag').textContent=t.models.join(' · ');document.getElementById('detailTitle').textContent=t.title;document.getElementById('detailIntro').textContent=t.desc;const ol=document.getElementById('detailSteps');ol.innerHTML='';t.steps.forEach(s=>{const li=document.createElement('li');li.textContent=s;ol.appendChild(li)});document.getElementById('detail').style.display='block';document.getElementById('detail').scrollIntoView({behavior:'smooth'});}
+document.getElementById('model').addEventListener('change',render);document.getElementById('search').addEventListener('input',render);render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body></html>
