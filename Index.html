@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#183b2b">
+<title>MTZ PRO – Szerelési Mesterkönyv</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef1eb;color:#202820;font-family:Arial,sans-serif}
+header{background:#183b2b;color:white;padding:20px;text-align:center}
+header h1{margin:0;font-size:27px}
+header p{margin:7px 0 0;color:#cbd8ca}
+main{max-width:850px;margin:auto;padding:15px}
+.box{background:white;border-radius:13px;padding:18px;margin:15px 0;box-shadow:0 3px 12px #0001}
+h2{color:#183b2b}
+select,input{width:100%;padding:13px;border:1px solid #bbb;border-radius:8px;font-size:16px}
+button{background:#24583b;color:white;border:0;padding:14px;border-radius:8px;font-size:15px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.card{background:#f1f5ed;color:#183b2b;border:1px solid #dce5d7;text-align:left;min-height:85px}
+.card strong{display:block;margin-bottom:6px}
+.result{line-height:1.6}
+footer{text-align:center;padding:25px;color:#68746c;font-size:12px}
+@media(min-width:650px){.grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header>
+<h1>🚜 MTZ PRO</h1>
+<p>Szerelési Mesterkönyv</p>
+</header>
+<main>
+<div class="box">
+<h2>Traktormodell kiválasztása</h2>
+<select id="model">
+<option>MTZ-50</option>
+<option>MTZ-52</option>
+<option>MTZ-80</option>
+<option>MTZ-82</option>
+<option>MTZ-820</option>
+<option>MTZ-892</option>
+<option>MTZ-900</option>
+<option>MTZ-920</option>
+<option>MTZ-952</option>
+<option>MTZ-1025</option>
+<option>MTZ-1221</option>
+<option>MTZ-1523</option>
+<option>MTZ-2022</option>
+<option>MTZ-2522</option>
+<option>MTZ-2822</option>
+<option>MTZ-3022</option>
+</select>
+</div>
+
+<div class="box">
+<h2>🔎 Szerelési útmutató keresése</h2>
+<input id="search" placeholder="Például: motor, kuplung, hidraulika">
+</div>
+
+<div class="box">
+<h2>Szerelési témakörök</h2>
+<div class="grid" id="topics"></div>
+</div>
+
+<div class="box result" id="result">
+<h2>Üdvözöl az MTZ PRO!</h2>
+Válassz egy szerelési témakört a kezdéshez.
+</div>
+
+<div class="box">
+<h2>⚠️ Fontos biztonsági tudnivaló</h2>
+Javítás előtt állítsd le a motort, vedd ki az indítókulcsot, rögzítsd a traktort. A pontos nyomatékokat, hézagokat és beállításokat mindig az adott modell gyári kézikönyve alapján végezd.
+</div>
+</main>
+<footer>MTZ PRO – Szerelési Mesterkönyv | 1.0</footer>
+
+<script>
+const topics=[
+["Motor","⚙️","Ellenőrizd az olajszintet, a hűtést, a levegőszűrőt és az esetleges olajfolyásokat. Rendellenes zaj esetén állítsd le a motort."],
+["Üzemanyagrendszer","⛽","Ellenőrizd a tartályt, a szűrőket, a csöveket és a csatlakozásokat. Légtelenítést a típus gyári eljárása szerint végezz."],
+["Hűtőrendszer","🌡️","Vizsgáld meg a hűtőfolyadék szintjét, a hűtőt, a ventilátort és a vízcsöveket. Forró hűtőrendszert ne nyiss ki."],
+["Kuplung","🔩","A csúszás, nehéz kiemelés vagy rángatás kuplunghibára utalhat. A beállítás modellfüggő."],
+["Sebességváltó","🛠️","Ellenőrizd az olajszintet, a szivárgást és a rendellenes zajokat. Fokozatkidobás esetén vizsgáld át a váltót."],
+["Hátsó híd","⚙️","Ellenőrizd az olajszintet, a csapágyakat és a féltengelyek környékét."],
+["Első híd","🚜","Vizsgáld meg a hajtást, a kardánkereszteket, a kerékagyakat és a rögzítéseket."],
+["Hidraulika","💧","Ellenőrizd az olajszintet, a szűrőt, a tömlőket és a szivárgásokat. Nagynyomású szivárgást kézzel soha ne keress."],
+["Fékek","🛑","Ellenőrizd a pedálokat, a rudazatot és a fékhatást. Hibás fékkel ne használd a traktort."],
+["Kormányzás","↔️","Vizsgáld meg a gömbfejeket, az összekötőket és a kormány holtjátékát."],
+["Elektromos rendszer","⚡","Ellenőrizd az akkumulátort, a sarukat, a biztosítékokat, a testkábeleket és a töltést."],
+["Karbantartás","📋","Napi ellenőrzés: olajszint, hűtőfolyadék, gumik, fékek, világítás, szivárgások."]
+];
+
+const topicsDiv=document.getElementById("topics");
+const result=document.getElementById("result");
+
+function render(){
+ const q=document.getElementById("search").value.toLowerCase();
+ topicsDiv.innerHTML="";
+ topics.filter(t=>(t[0]+" "+t[2]).toLowerCase().includes(q)).forEach(t=>{
+  const b=document.createElement("button");
+  b.className="card";
+  b.innerHTML="<strong>"+t[1]+" "+t[0]+"</strong><small>Útmutató megnyitása</small>";
+  b.onclick=()=>{
+   result.innerHTML="<h2>"+t[1]+" "+t[0]+"</h2><p><b>Modell:</b> "+document.getElementById("model").value+"</p><p>"+t[2]+"</p>";
+   result.scrollIntoView({behavior:"smooth"});
+  };
+  topicsDiv.appendChild(b);
+ });
+}
+document.getElementById("search").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
