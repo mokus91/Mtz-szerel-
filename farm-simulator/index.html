@@ -53,6 +53,7 @@
 <div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Telefonra optimalizált MTZ-82 traktoros szimulátor. A traktor részletei és kezelőszervei folyamatosan bővülnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
 <script>
 (()=>{
+window.addEventListener('error',e=>{const m=document.getElementById('start');if(m){m.style.display='flex';m.innerHTML='<div class="card"><h1>INDÍTÁSI HIBA</h1><p style="color:#fff">'+String(e.message||'Ismeretlen hiba').replace(/[<>]/g,'')+'</p><p>Frissítsd az oldalt. Ha továbbra sem indul, küldd el ezt a hibaüzenetet.</p><button class="mainbtn" onclick="location.reload()">ÚJRAPRÓBÁLÁS</button></div>'}});
 const startGame=()=>{
 
 const mount=document.getElementById('game');if(!window.THREE){mount.innerHTML='<div style="padding:30px">A 3D motor nem töltődött be. Ellenőrizd az internetkapcsolatot.</div>';return}
@@ -263,7 +264,8 @@ renderer.render(scene,camera)}
 animate();addEventListener('resize',()=>{camera.fov=innerWidth<600?78:62;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 };
-if(window.THREE){startGame();}else{
+const safeStart=()=>{try{startGame()}catch(e){const m=document.getElementById('start');m.style.display='flex';m.innerHTML='<div class="card"><h1>INDÍTÁSI HIBA</h1><p style="color:#fff">'+String(e&&e.message||e).replace(/[<>]/g,'')+'</p><button class="mainbtn" onclick="location.reload()">ÚJRAPRÓBÁLÁS</button></div>';}};
+if(window.THREE){safeStart();}else{
  const sources=[
   "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
   "https://unpkg.com/three@0.128.0/build/three.min.js"
@@ -271,7 +273,7 @@ if(window.THREE){startGame();}else{
  const load=(i)=>{
   if(i>=sources.length){document.getElementById("game").innerHTML='<div style="padding:24px;background:#111;color:white">A 3D motor nem tölthető be. Kapcsold be az internetet, majd frissítsd az oldalt.</div>';return;}
   const script=document.createElement("script");script.src=sources[i];
-  script.onload=()=>{if(window.THREE)startGame();else load(i+1);};
+  script.onload=()=>{if(window.THREE)safeStart();else load(i+1);};
   script.onerror=()=>load(i+1);
   document.head.appendChild(script);
  };
