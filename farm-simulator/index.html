@@ -146,7 +146,7 @@ const smokeMat=new THREE.MeshBasicMaterial({color:0x777b7b,transparent:true,opac
 const ambientFill=new THREE.DirectionalLight(0xc5d8e8,.28);ambientFill.position.set(18,12,-25);scene.add(ambientFill);
 const clock=new THREE.Clock();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
-if(started){
+if(started){if(importedMixer)importedMixer.update(dt);
 if(engineOn&&gear!==0&&controls.gas){const ratio=[0,1,1.55,2.15,2.8][Math.abs(gear)];const maxSpeed=gear<0?4:Math.max(3,ratio*3.8);speed=Math.min(speed+dt*(2.2/Math.max(1,ratio*.65)),maxSpeed)}
 else if(controls.brake)speed=Math.max(0,speed-dt*7.5);
 else speed*=Math.pow(.992,dt*60);
