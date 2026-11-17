@@ -21,7 +21,7 @@
 <div id="help">Feladat: hajts a barna földterületre, majd használd a MUNKA gombot. A nyilakkal kormányozhatsz.</div>
 <div id="controls">
  <div class="cluster"><button class="btn" data-control="left">◀</button><button class="btn" data-control="right">▶</button></div>
- <div class="cluster"><button class="btn wide" id="work">MUNKA</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
+ <div class="cluster"><button class="btn wide" id="view">KAMERA</button><button class="btn wide" id="work">MUNKA</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
 </div>
 <div id="toast"></div>
 <div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">A játék első, fejlesztés alatt álló változata. A traktor és a gépek 3D-s játékmodellként szerepelnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
@@ -83,8 +83,20 @@ let speed=0,heading=0,money=0,working=false,worked=0;const controls={left:false,
 tractor.position.set(0,0,12);
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2100)}
 document.querySelectorAll('[data-control]').forEach(b=>{const k=b.dataset.control;const on=e=>{e.preventDefault();controls[k]=true;b.classList.add('active')},off=e=>{e.preventDefault();controls[k]=false;b.classList.remove('active')};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,off))});
-document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';started=true;toast('Indulhat a munka! Hajts a föld felé.')};
+document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';started=true;startEngineSound();toast('A motor jár. Hajts a föld felé!')};
 document.getElementById('work').onclick=()=>{if(Math.abs(tractor.position.x)<25&&tractor.position.z< -24&&tractor.position.z> -62){working=!working;plow.visible=working;toast(working?'A földmunka elkezdődött!':'A földmunka szünetel.')}else toast('Hajts a barna földterületre!')};
+// Porfelhő és keréknyomok: a traktor mozgására reagálnak
+const dustMat=new THREE.MeshBasicMaterial({color:0xb49a73,transparent:true,opacity:.24,depthWrite:false});
+const dust=[];
+for(let i=0;i<34;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.12+Math.random()*.2,6,5),dustMat.clone());p.visible=false;scene.add(p);dust.push({mesh:p,life:0})}
+const trackMat= new THREE.MeshBasicMaterial({color:0x493724,transparent:true,opacity:.75});
+const tracks=[];
+function addTrack(x,z){const t=new THREE.Mesh(new THREE.BoxGeometry(.22,.018,.9),trackMat);t.position.set(x,.015,z);t.rotation.y=heading;scene.add(t);tracks.push(t);if(tracks.length>240){scene.remove(tracks.shift())}}
+let trackTimer=0, viewMode=0;
+document.getElementById('view').onclick=()=>{viewMode=(viewMode+1)%2;toast(viewMode?'Vezetőfülke-nézet':'Külső kamera')};
+// Motorhang – csak a játékos indítása után aktiválódik
+let audioCtx=null,engineOsc=null,engineGain=null;
+function startEngineSound(){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();engineOsc=audioCtx.createOscillator();engineGain=audioCtx.createGain();const filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=180;engineOsc.type='sawtooth';engineOsc.frequency.value=38;engineGain.gain.value=.018;engineOsc.connect(filter);filter.connect(engineGain);engineGain.connect(audioCtx.destination);engineOsc.start()}catch(e){}}
 const clock=new THREE.Clock();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
 if(started){if(controls.gas)speed=Math.min(speed+dt*3.3,13);else if(controls.brake)speed=Math.max(speed-dt*8,0);else speed*=Math.pow(.985,dt*60);
@@ -92,11 +104,17 @@ if(controls.left)heading+=dt*(.8+speed*.035);if(controls.right)heading-=dt*(.8+s
 tractor.rotation.y=heading;tractor.position.x+=Math.sin(heading)*speed*dt;tractor.position.z-=Math.cos(heading)*speed*dt;
 tractor.position.x=THREE.MathUtils.clamp(tractor.position.x,-95,95);tractor.position.z=THREE.MathUtils.clamp(tractor.position.z,-95,95);
 wheels.forEach(w=>w.rotation.x-=speed*dt*1.6);
+if(engineOsc&&audioCtx){engineOsc.frequency.setTargetAtTime(35+speed*3.8,audioCtx.currentTime,.12);engineGain.gain.setTargetAtTime(.012+speed*.0018,audioCtx.currentTime,.15)}
+if(speed>2){trackTimer+=dt;if(trackTimer>.18){trackTimer=0;for(const side of [-1,1])addTrack(tractor.position.x+Math.cos(heading)*side*.92,tractor.position.z+Math.sin(heading)*side*.92)}}
+if(speed>3&&Math.random()<.38){const item=dust.find(d=>d.life<=0);if(item){item.life=1.2;item.mesh.visible=true;item.mesh.position.set(tractor.position.x-Math.sin(heading)*2+(Math.random()-.5)*1.5,.35,tractor.position.z+Math.cos(heading)*2+(Math.random()-.5)*1.5);item.mesh.scale.setScalar(.7+Math.random()*1.8)}}
+dust.forEach(d=>{if(d.life>0){d.life-=dt;d.mesh.position.y+=dt*.7;d.mesh.position.x+=(Math.random()-.5)*dt*.5;d.mesh.material.opacity=Math.max(0,d.life*.2);if(d.life<=0)d.mesh.visible=false}});
 const onField=Math.abs(tractor.position.x)<23&&tractor.position.z< -25&&tractor.position.z> -59;
 if(working&&onField&&speed>1){worked+=dt; if(worked>7){money+=100;worked=0;document.getElementById('money').textContent=money.toLocaleString('hu-HU');toast('Szép munka! +100 Ft')}} 
 document.getElementById('speed').textContent=Math.round(speed*1.7);document.getElementById('gear').textContent=speed>0.5?'Előremenet':'Üres';document.getElementById('task').textContent=onField?'Földmunka':'Menj a földre!';
 }
-const target=new THREE.Vector3(tractor.position.x,1.75,tractor.position.z);const behind=new THREE.Vector3(Math.sin(heading)*9,5.0,Math.cos(heading)*9);camera.position.lerp(target.clone().add(behind),.065);camera.lookAt(target.x,1.65,target.z-2.4);
+const target=new THREE.Vector3(tractor.position.x,1.75,tractor.position.z);
+if(viewMode===0){const behind=new THREE.Vector3(Math.sin(heading)*9,5.0,Math.cos(heading)*9);camera.position.lerp(target.clone().add(behind),.065);camera.lookAt(target.x,1.65,target.z-2.4)}
+else{const cabEye=new THREE.Vector3(tractor.position.x+Math.sin(heading)*.15,tractor.position.y+2.85,tractor.position.z-.1);cabEye.x+=Math.sin(heading)*.1;cabEye.z+=Math.cos(heading)*.1;camera.position.lerp(cabEye,.16);camera.lookAt(tractor.position.x-Math.sin(heading)*12,2.35,tractor.position.z-Math.cos(heading)*12)}
 renderer.render(scene,camera)}
 animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
