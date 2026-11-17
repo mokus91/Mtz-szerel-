@@ -56,7 +56,8 @@
 const startGame=()=>{
 
 const mount=document.getElementById('game');if(!window.THREE){mount.innerHTML='<div style="padding:30px">A 3D motor nem töltődött be. Ellenőrizd az internetkapcsolatot.</div>';return}
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc5d4);scene.fog=new THREE.Fog(0x9fc5d4,75,190);
+const scene=new THREE.Scene();
+const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});scene.background=new THREE.Color(0x9fc5d4);scene.fog=new THREE.Fog(0x9fc5d4,75,190);
 const camera=new THREE.PerspectiveCamera(innerWidth<600?78:62,innerWidth/innerHeight,.1,300);
 const renderer=new THREE.WebGLRenderer({antialias:innerWidth>600,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<600?1.5:2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.physicallyCorrectLights=true;mount.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xe5f2ff,0x667044,1.35));const sun=new THREE.DirectionalLight(0xffedcf,1.35);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(innerWidth<600?1024:2048,innerWidth<600?1024:2048);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.bias=-.00018;scene.add(sun);
@@ -71,7 +72,7 @@ const farHills=[];
 for(let i=0;i<9;i++){const hill=new THREE.Mesh(new THREE.SphereGeometry(1,16,10),mat([0x78906a,0x879b70,0x6d8966][i%3]));hill.scale.set(24+i%3*8,7+i%4*2,10);hill.position.set(-100+i*25,1,-105-(i%2)*12);scene.add(hill);farHills.push(hill)}
 const clouds=[];
 for(let i=0;i<7;i++){const g=new THREE.Group();for(let j=0;j<4;j++){const puff=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),new THREE.MeshStandardMaterial({color:0xf5f5ed,roughness:1}));puff.scale.set(4+j%2*1.4,1.35+j%3*.25,1.8);puff.position.set((j-1.5)*2.5,(j%2)*.45,0);g.add(puff)}g.position.set(-65+i*23,30+(i%3)*7,-78-(i%2)*12);scene.add(g);clouds.push(g)}
-const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+
 function noiseTexture(base,spots,seed=1){const c=document.createElement("canvas");c.width=c.height=512;const ctx=c.getContext("2d");ctx.fillStyle=base;ctx.fillRect(0,0,512,512);let x=seed;const rnd=()=>{x=(x*1664525+1013904223)>>>0;return x/4294967296};for(let i=0;i<18000;i++){const a=spots[Math.floor(rnd()*spots.length)];ctx.globalAlpha=.08+rnd()*.22;ctx.fillStyle=a;const w=1+rnd()*5;ctx.fillRect(rnd()*512,rnd()*512,w,w)}ctx.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
 const grassTex=noiseTexture("#526b38",["#82934d","#344b29","#a0a064","#5e7741"],7);grassTex.repeat.set(18,18);
 const dirtTex=noiseTexture("#72502f",["#9b7548","#46301f","#b18b5b","#59402a"],21);dirtTex.repeat.set(5,4);
