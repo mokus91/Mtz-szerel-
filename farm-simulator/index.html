@@ -121,7 +121,7 @@ if(started){if(controls.gas)speed=Math.min(speed+dt*3.3,13);else if(controls.bra
 if(controls.left)heading+=dt*(.8+speed*.035);if(controls.right)heading-=dt*(.8+speed*.035);
 tractor.rotation.y=heading;tractor.position.x+=Math.sin(heading)*speed*dt;tractor.position.z-=Math.cos(heading)*speed*dt;
 tractor.position.x=THREE.MathUtils.clamp(tractor.position.x,-95,95);tractor.position.z=THREE.MathUtils.clamp(tractor.position.z,-95,95);
-wheels.forEach(w=>w.rotation.x-=speed*dt*1.6);steering.rotation.z=(controls.left?-.55:0)+(controls.right?.55:0);gaugeFaces.forEach((n,i)=>{n.rotation.z=-.35-Math.min(speed/13,1)*(i===0?1.1:.65)});
+wheels.forEach(w=>w.rotation.x-=speed*dt*1.6);steering.rotation.z=(controls.left?-.55:0)+(controls.right ? .55 : 0);gaugeFaces.forEach((n,i)=>{n.rotation.z=-.35-Math.min(speed/13,1)*(i===0?1.1:.65)});
 if(engineOsc&&audioCtx){engineOsc.frequency.setTargetAtTime(35+speed*3.8,audioCtx.currentTime,.12);engineGain.gain.setTargetAtTime(.012+speed*.0018,audioCtx.currentTime,.15)}
 if(speed>2){trackTimer+=dt;if(trackTimer>.18){trackTimer=0;for(const side of [-1,1])addTrack(tractor.position.x+Math.cos(heading)*side*.92,tractor.position.z+Math.sin(heading)*side*.92)}}
 if(speed>3&&Math.random()<.38){const item=dust.find(d=>d.life<=0);if(item){item.life=1.2;item.mesh.visible=true;item.mesh.position.set(tractor.position.x-Math.sin(heading)*2+(Math.random()-.5)*1.5,.35,tractor.position.z+Math.cos(heading)*2+(Math.random()-.5)*1.5);item.mesh.scale.setScalar(.7+Math.random()*1.8)}}
