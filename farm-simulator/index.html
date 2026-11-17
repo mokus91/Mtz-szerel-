@@ -60,6 +60,17 @@ const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc5d4);scene.f
 const camera=new THREE.PerspectiveCamera(innerWidth<600?78:62,innerWidth/innerHeight,.1,300);
 const renderer=new THREE.WebGLRenderer({antialias:innerWidth>600,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<600?1.5:2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.physicallyCorrectLights=true;mount.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xe5f2ff,0x667044,1.35));const sun=new THREE.DirectionalLight(0xffedcf,1.35);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(innerWidth<600?1024:2048,innerWidth<600?1024:2048);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.bias=-.00018;scene.add(sun);
+
+// Látványos égbolt, távoli dombok és napkorong
+scene.background=null;
+const sky=new THREE.Mesh(new THREE.SphereGeometry(210,24,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,vertexShader:'varying vec3 vP; void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec3 vP; void main(){float h=normalize(vP).y; vec3 low=vec3(0.78,0.83,0.78); vec3 mid=vec3(0.40,0.66,0.82); vec3 high=vec3(0.12,0.34,0.62); vec3 c=mix(low,mid,smoothstep(-0.08,0.32,h)); c=mix(c,high,smoothstep(0.32,0.95,h)); gl_FragColor=vec4(c,1.0);}'}));
+scene.add(sky);
+const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5,20,16),new THREE.MeshBasicMaterial({color:0xfff0c4}));
+sunDisc.position.set(-72,58,-115);scene.add(sunDisc);
+const farHills=[];
+for(let i=0;i<9;i++){const hill=new THREE.Mesh(new THREE.SphereGeometry(1,16,10),mat([0x78906a,0x879b70,0x6d8966][i%3]));hill.scale.set(24+i%3*8,7+i%4*2,10);hill.position.set(-100+i*25,1,-105-(i%2)*12);scene.add(hill);farHills.push(hill)}
+const clouds=[];
+for(let i=0;i<7;i++){const g=new THREE.Group();for(let j=0;j<4;j++){const puff=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),new THREE.MeshStandardMaterial({color:0xf5f5ed,roughness:1}));puff.scale.set(4+j%2*1.4,1.35+j%3*.25,1.8);puff.position.set((j-1.5)*2.5,(j%2)*.45,0);g.add(puff)}g.position.set(-65+i*23,30+(i%3)*7,-78-(i%2)*12);scene.add(g);clouds.push(g)}
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
 function noiseTexture(base,spots,seed=1){const c=document.createElement("canvas");c.width=c.height=512;const ctx=c.getContext("2d");ctx.fillStyle=base;ctx.fillRect(0,0,512,512);let x=seed;const rnd=()=>{x=(x*1664525+1013904223)>>>0;return x/4294967296};for(let i=0;i<18000;i++){const a=spots[Math.floor(rnd()*spots.length)];ctx.globalAlpha=.08+rnd()*.22;ctx.fillStyle=a;const w=1+rnd()*5;ctx.fillRect(rnd()*512,rnd()*512,w,w)}ctx.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
 const grassTex=noiseTexture("#526b38",["#82934d","#344b29","#a0a064","#5e7741"],7);grassTex.repeat.set(18,18);
@@ -74,6 +85,17 @@ for(let i=0;i<17;i++){const row=new THREE.Mesh(new THREE.BoxGeometry(45,.035,.12
 function box(w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 box(16,5,10,mat(0xb6a17d),-28,2.5,-30);const roof=box(18,1,12,mat(0x8c2922),-28,5.5,-30);roof.rotation.z=.04;
 box(4,3,.25,mat(0x43352b),-28,1.5,-24.8);
+box(5.8,3.3,.22,mat(0x5a3828),-28,1.65,-24.72);
+for(let i=0;i<7;i++)box(.055,3,.035,mat(0x9d7652),-30.5+i*.82,1.65,-24.58);
+for(const x of [-33,-23]){box(1.15,1.1,.12,mat(0x344b4c),x,3.25,-24.82);box(1.28,.09,.16,mat(0xe0d1ae),x,3.82,-24.8);box(.09,1.2,.16,mat(0xe0d1ae),x,3.25,-24.8)}
+// Siló, tető és szellőző
+const silo=new THREE.Mesh(new THREE.CylinderGeometry(2.1,2.1,8,20),mat(0x9a9d94));silo.position.set(-17,4,-31);silo.castShadow=true;scene.add(silo);
+const siloRoof=new THREE.Mesh(new THREE.ConeGeometry(2.35,1.25,20),mat(0x8d3329));siloRoof.position.set(-17,8.55,-31);siloRoof.castShadow=true;scene.add(siloRoof);
+const siloBand=new THREE.Mesh(new THREE.TorusGeometry(2.12,.07,6,24),steel);siloBand.rotation.x=Math.PI/2;siloBand.position.set(-17,5.5,-31);scene.add(siloBand);
+// Udvari földút
+const farmRoad=new THREE.Mesh(new THREE.PlaneGeometry(9,105),new THREE.MeshStandardMaterial({color:0x88745a,roughness:1}));farmRoad.rotation.x=-Math.PI/2;farmRoad.position.set(14,-.045,-36);scene.add(farmRoad);
+for(let i=0;i<38;i++){const pebble=new THREE.Mesh(new THREE.CircleGeometry(.08+(i%3)*.035,6),mat(i%2?0x9b896e:0x66543f));pebble.rotation.x=-Math.PI/2;pebble.position.set(10+(i*7%8),-.025,-78+i*2.2);scene.add(pebble)}
+
 for(let i=0;i<24;i++){let x=(i%6)*10-27,z=Math.floor(i/6)*13-55;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.25,.35,2.2,7),mat(0x59402a));trunk.position.set(x,1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.SphereGeometry(2.2,8,7),mat(0x315b30));crown.position.set(x,3.1,z);crown.castShadow=true;scene.add(crown)}
 for(let i=0;i<22;i++){box(.18,.8,.18,mat(0xddd1a9),-25+i*2.3,.4,-12);box(.18,.8,.18,mat(0xddd1a9),-25+i*2.3,.4,-72)}
 // Tractor group, facing -Z
@@ -230,6 +252,9 @@ const onField=Math.abs(tractor.position.x)<23&&tractor.position.z< -25&&tractor.
 if(working&&onField&&speed>1){worked+=dt; if(worked>7){money+=100;worked=0;document.getElementById('money').textContent=money.toLocaleString('hu-HU');toast('Szép munka! +100 Ft')}} 
 document.getElementById('speed').textContent=Math.round(speed*1.7);document.getElementById('gear').textContent=gear===-1?'R • Hátramenet':gear===0?'N • Üres':gear+'. fokozat';document.getElementById('rpm').textContent=engineOn?Math.round(650+(controls.gas?650:0)+speed*105):0;document.getElementById('task').textContent=onField?'Földmunka':'Menj a földre!';
 }
+
+// Lassan sodródó felhők a távoli égbolton
+clouds.forEach((c,i)=>{c.position.x+=dt*(.12+i*.012);if(c.position.x>125)c.position.x=-125});
 const target=new THREE.Vector3(tractor.position.x,1.75,tractor.position.z);
 if(viewMode===0){const behind=new THREE.Vector3(Math.sin(heading)*(innerWidth<600?14:9),innerWidth<600?7.5:5,Math.cos(heading)*(innerWidth<600?14:9));camera.position.lerp(target.clone().add(behind),.12);camera.lookAt(target.x,1.65,target.z-2.4)}
 else{const cabEye=new THREE.Vector3(tractor.position.x+Math.sin(heading)*.12,tractor.position.y+2.92,tractor.position.z+Math.cos(heading)*.48);camera.position.lerp(cabEye,.2);camera.lookAt(tractor.position.x-Math.sin(heading)*18,2.55,tractor.position.z-Math.cos(heading)*18)}
