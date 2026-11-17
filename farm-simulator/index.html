@@ -31,9 +31,10 @@
 const mount=document.getElementById('game');if(!window.THREE){mount.innerHTML='<div style="padding:30px">A 3D motor nem töltődött be. Ellenőrizd az internetkapcsolatot.</div>';return}
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc5d4);scene.fog=new THREE.Fog(0x9fc5d4,75,190);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,300);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;mount.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;mount.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xe5f2ff,0x667044,1.35));const sun=new THREE.DirectionalLight(0xffedcf,1.35);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+const blackMetal=mat(0x252829,.55),steel=mat(0x9a9e9b,.38),rubberSide=mat(0x303232,.95),lampMat=new THREE.MeshStandardMaterial({color:0xffe6a6,emissive:0x8a6a27,emissiveIntensity:.35});
 const grass=mat(0x55753b),soil=mat(0x75502e),red=mat(0xc92b22),darkred=mat(0x741a17),rubber=mat(0x171717),rim=mat(0xaaa9a0),glass= new THREE.MeshStandardMaterial({color:0x9dc8d2,metalness:.15,roughness:.25,transparent:true,opacity:.65}),metal=mat(0x777b78);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),grass);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
 const field=new THREE.Mesh(new THREE.PlaneGeometry(46,34),soil);field.rotation.x=-Math.PI/2;field.position.set(0,.005,-42);field.receiveShadow=true;scene.add(field);
@@ -49,10 +50,31 @@ const tractor=new THREE.Group();scene.add(tractor);
 const chassis=new THREE.Mesh(new THREE.BoxGeometry(2.15,.65,3.7),darkred);chassis.position.set(0,1.25,0);chassis.castShadow=true;tractor.add(chassis);
 const hood=new THREE.Mesh(new THREE.BoxGeometry(1.8,.95,1.85),red);hood.position.set(0,1.78,-1.05);hood.castShadow=true;tractor.add(hood);
 const cab=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.65,1.65),glass);cab.position.set(0,2.65,.65);cab.castShadow=true;tractor.add(cab);
-const cabtop=new THREE.Mesh(new THREE.BoxGeometry(1.95,.16,1.9),red);cabtop.position.set(0,3.52,.65);tractor.add(cabtop);
-const exhaust=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.8,8),rubber);exhaust.position.set(.6,2.65,-1.5);tractor.add(exhaust);
+const cabtop=new THREE.Mesh(new THREE.BoxGeometry(1.95,.16,1.9),red);cabtop.position.set(0,3.52,.65);cabtop.castShadow=true;tractor.add(cabtop);
+// Kabinkeret, ajtóosztások és fellépők
+for(const x of [-.84,.84])for(const z of [-.16,1.43]){const post=new THREE.Mesh(new THREE.BoxGeometry(.09,1.58,.09),blackMetal);post.position.set(x,2.68,z);tractor.add(post)}
+for(const z of [-.16,1.43]){const cross=new THREE.Mesh(new THREE.BoxGeometry(1.72,.07,.07),blackMetal);cross.position.set(0,3.43,z);tractor.add(cross)}
+const doorLine=new THREE.Mesh(new THREE.BoxGeometry(.025,1.25,.025),blackMetal);doorLine.position.set(.87,2.65,.62);tractor.add(doorLine);
+const seat=new THREE.Mesh(new THREE.BoxGeometry(.62,.72,.58),mat(0x292522));seat.position.set(0,2.05,.72);tractor.add(seat);
+const seatBack=new THREE.Mesh(new THREE.BoxGeometry(.62,.65,.16),mat(0x292522));seatBack.position.set(0,2.48,1.0);seatBack.rotation.x=-.12;tractor.add(seatBack);
+const steering=new THREE.Mesh(new THREE.TorusGeometry(.27,.035,8,24),blackMetal);steering.position.set(0,2.65,-.02);steering.rotation.x=1.12;tractor.add(steering);
+const dash=new THREE.Mesh(new THREE.BoxGeometry(.95,.2,.35),blackMetal);dash.position.set(0,2.35,-.23);tractor.add(dash);
+// Visszapillantó tükrök
+for(const x of [-1.02,1.02]){const arm=new THREE.Mesh(new THREE.BoxGeometry(.045,.48,.045),steel);arm.position.set(x,3.0,.25);arm.rotation.z=x>0?-.12:.12;tractor.add(arm);const mirror=new THREE.Mesh(new THREE.BoxGeometry(.22,.3,.08),blackMetal);mirror.position.set(x*1.04,3.22,.25);tractor.add(mirror)}
+// Sárvédők és fellépők
+for(const x of [-1.13,1.13]){const fender=new THREE.Mesh(new THREE.BoxGeometry(.72,.12,2.0),darkred);fender.position.set(x,2.0,1.28);tractor.add(fender);const step=new THREE.Mesh(new THREE.BoxGeometry(.38,.09,.72),steel);step.position.set(x*1.08,.78,.55);tractor.add(step)}
+// Motorháztető oldalsó szellőzői és hűtőrács
+const exhaust=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.8,10),blackMetal);exhaust.position.set(.6,2.65,-1.5);tractor.add(exhaust);
+const exhaustCap=new THREE.Mesh(new THREE.CylinderGeometry(.1,.08,.08,10),steel);exhaustCap.position.set(.6,3.08,-1.5);tractor.add(exhaustCap);
+const grille=new THREE.Mesh(new THREE.BoxGeometry(1.12,.62,.075),blackMetal);grille.position.set(0,1.58,-2.0);tractor.add(grille);
+for(let i=0;i<9;i++){const slat=new THREE.Mesh(new THREE.BoxGeometry(.035,.52,.035),steel);slat.position.set(-.49+i*.122,1.58,-2.05);tractor.add(slat)}
+for(const x of [-.68,.68]){const headlamp=new THREE.Mesh(new THREE.BoxGeometry(.34,.27,.12),lampMat);headlamp.position.set(x,1.92,-2.02);tractor.add(headlamp);const rearLamp=new THREE.Mesh(new THREE.BoxGeometry(.2,.18,.1),mat(0xc72c21));rearLamp.position.set(x,1.55,1.88);tractor.add(rearLamp)}
+for(let side of [-1,1])for(let i=0;i<5;i++){const vent=new THREE.Mesh(new THREE.BoxGeometry(.035,.28,.045),blackMetal);vent.position.set(side*.91,1.72,-1.48+i*.18);tractor.add(vent)}
 const wheels=[];
-function wheel(x,z,r){const g=new THREE.Group();g.position.set(x,r,z);const tire=new THREE.Mesh(new THREE.CylinderGeometry(r,r,.48,18),rubber);tire.rotation.z=Math.PI/2;tire.castShadow=true;g.add(tire);const hub=new THREE.Mesh(new THREE.CylinderGeometry(r*.48,r*.48,.5,12),rim);hub.rotation.z=Math.PI/2;g.add(hub);for(let k=0;k<12;k++){const lug=new THREE.Mesh(new THREE.BoxGeometry(.09,.12,.45),mat(0x292929));lug.position.set(0,Math.sin(k*Math.PI/6)*r*.83,Math.cos(k*Math.PI/6)*r*.83);g.add(lug)}tractor.add(g);wheels.push(g)}
+function wheel(x,z,r){const g=new THREE.Group();g.position.set(x,r,z);const tire=new THREE.Mesh(new THREE.CylinderGeometry(r,r,.48,18),rubber);tire.rotation.z=Math.PI/2;tire.castShadow=true;g.add(tire);const hub=new THREE.Mesh(new THREE.CylinderGeometry(r*.48,r*.48,.5,12),rim);hub.rotation.z=Math.PI/2;g.add(hub);for(let k=0;k<12;k++){const lug=new THREE.Mesh(new THREE.BoxGeometry(.09,.12,.45),mat(0x292929));lug.position.set(0,Math.sin(k*Math.PI/6)*r*.83,Math.cos(k*Math.PI/6)*r*.83);g.add(lug)}
+// Mély, tagolt mezőgazdasági gumiminta
+for(let k=0;k<24;k++){const a=k*Math.PI/12;for(const side of [-1,1]){const tread=new THREE.Mesh(new THREE.BoxGeometry(.52,.15,.19),rubberSide);tread.position.set(side*.08,Math.sin(a)*r*.91,Math.cos(a)*r*.91);tread.rotation.x=-a*.18;tread.castShadow=true;g.add(tread)}}
+const sidewall=new THREE.Mesh(new THREE.TorusGeometry(r*.73,.035,6,24),rubberSide);sidewall.rotation.y=Math.PI/2;sidewall.position.x=.247;g.add(sidewall);tractor.add(g);wheels.push(g)}
 wheel(-1.13,-1.25,.72);wheel(1.13,-1.25,.72);wheel(-1.13,1.35,.98);wheel(1.13,1.35,.98);
 for(let x of [-.65,.65]){const lamp=new THREE.Mesh(new THREE.BoxGeometry(.35,.25,.1),mat(0xffe8a1));lamp.position.set(x,1.85,-2);tractor.add(lamp)}
 const hitch=box(.5,.3,.8,metal,0,.35,0);tractor.remove(hitch);tractor.add(hitch);hitch.position.set(0,.55,2.15);
@@ -74,7 +96,7 @@ const onField=Math.abs(tractor.position.x)<23&&tractor.position.z< -25&&tractor.
 if(working&&onField&&speed>1){worked+=dt; if(worked>7){money+=100;worked=0;document.getElementById('money').textContent=money.toLocaleString('hu-HU');toast('Szép munka! +100 Ft')}} 
 document.getElementById('speed').textContent=Math.round(speed*1.7);document.getElementById('gear').textContent=speed>0.5?'Előremenet':'Üres';document.getElementById('task').textContent=onField?'Földmunka':'Menj a földre!';
 }
-const target=new THREE.Vector3(tractor.position.x,1.5,tractor.position.z);const behind=new THREE.Vector3(Math.sin(heading)*8,5.5,Math.cos(heading)*8);camera.position.lerp(target.clone().add(behind),.09);camera.lookAt(target.x,1.5,target.z-2);
+const target=new THREE.Vector3(tractor.position.x,1.75,tractor.position.z);const behind=new THREE.Vector3(Math.sin(heading)*9,5.0,Math.cos(heading)*9);camera.position.lerp(target.clone().add(behind),.065);camera.lookAt(target.x,1.65,target.z-2.4);
 renderer.render(scene,camera)}
 animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
