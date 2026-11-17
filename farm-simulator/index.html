@@ -47,7 +47,7 @@
 <div id="help">Feladat: hajts a barna földterületre, majd használd a MUNKA gombot. A nyilakkal kormányozhatsz.</div>
 <div id="controls">
  <div class="cluster"><button class="btn" data-control="left">◀</button><button class="btn" data-control="right">▶</button></div>
- <div class="cluster"><button class="btn wide" id="view">KAMERA</button><button class="btn wide" id="gearDown">− FOKOZAT</button><button class="btn wide" id="gearUp">+ FOKOZAT</button><button class="btn wide" id="engine">MOTOR BE</button><button class="btn wide" id="lights">LÁMPA</button><button class="btn wide" id="work">MUNKA</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
+ <div class="cluster"><button class="btn wide" id="view">KAMERA</button><button class="btn wide" id="gearDown">− FOKOZAT</button><button class="btn wide" id="gearUp">+ FOKOZAT</button><button class="btn wide" id="engine">MOTOR BE</button><button class="btn wide" id="lights">LÁMPA</button><button class="btn wide" id="work">MUNKA</button><button class="btn wide" id="save">MENTÉS</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
 </div>
 <div id="toast"></div>
 <div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Telefonra optimalizált MTZ-82 traktoros szimulátor. A traktor részletei és kezelőszervei folyamatosan bővülnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
@@ -208,9 +208,14 @@ const plow=new THREE.Group();tractor.add(plow);const beam=new THREE.Mesh(new THR
 let speed=0,heading=0,money=0,working=false,worked=0,gear=0,engineOn=false,lightsOn=false,steerAngle=0;const controls={left:false,right:false,gas:false,brake:false};let started=false;
 tractor.position.set(0,0,12);
 // A beépített MTZ-stílusú traktor mindig megjelenik; nincs hibás külső modellhivatkozás.
+const missionNames=['Indítsd be a traktort!','Hajts ki a barna földterületre!','Kapcsold be a MUNKA funkciót, és dolgozz 20 másodpercig!','Keress összesen 500 Ft-ot a földmunkával!','Gratulálunk! Teljesítetted az első munkanapot!'];
+let missionIndex=0,missionWork=0;
+function saveGame(show=true){try{localStorage.setItem('mtzFarmSave',JSON.stringify({money,missionIndex,missionWork,worked,x:tractor.position.x,z:tractor.position.z,heading,gear,engineOn}));if(show)toast('Játékállás elmentve!');}catch(e){if(show)toast('A mentés nem sikerült.');}}
+function loadGame(){try{const d=JSON.parse(localStorage.getItem('mtzFarmSave')||'null');if(!d)return;money=Number(d.money)||0;missionIndex=Math.max(0,Math.min(4,Number(d.missionIndex)||0));missionWork=Number(d.missionWork)||0;worked=Number(d.worked)||0;tractor.position.x=Number(d.x)||0;tractor.position.z=Number(d.z)||12;heading=Number(d.heading)||0;gear=Number(d.gear)||0;engineOn=!!d.engineOn;document.getElementById('money').textContent=money.toLocaleString('hu-HU');document.getElementById('engine').textContent=engineOn?'MOTOR KI':'MOTOR BE';}catch(e){}}
+function nextMission(){if(missionIndex<4){missionIndex++;toast('FELADAT TELJESÍTVE! +250 Ft');money+=250;document.getElementById('money').textContent=money.toLocaleString('hu-HU');playTone(880,.22);saveGame(false);}}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2100)}
-document.querySelectorAll('[data-control]').forEach(b=>{const k=b.dataset.control;const on=e=>{e.preventDefault();controls[k]=true;b.classList.add('active')},off=e=>{e.preventDefault();controls[k]=false;b.classList.remove('active')};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,off))});
-document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';started=true;engineOn=true;document.getElementById('engine').textContent='MOTOR KI';startEngineSound();toast('A motor beindult. Válassz fokozatot!')};
+loadGame();document.getElementById('save').onclick=()=>saveGame(true);document.querySelectorAll('[data-control]').forEach(b=>{const k=b.dataset.control;const on=e=>{e.preventDefault();controls[k]=true;b.classList.add('active')},off=e=>{e.preventDefault();controls[k]=false;b.classList.remove('active')};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,off))});
+document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';started=true;engineOn=true;document.getElementById('engine').textContent='MOTOR KI';startEngineSound();if(missionIndex===0)nextMission();toast('A motor beindult. Válassz fokozatot!')};
 document.getElementById('engine').onclick=()=>{engineOn=!engineOn;if(!engineOn){speed=0;gear=0;working=false;plow.visible=false}else if(!audioCtx)startEngineSound();document.getElementById('engine').textContent=engineOn?'MOTOR KI':'MOTOR BE';toast(engineOn?'Motor beindítva.':'Motor leállítva.')};
 document.getElementById('gearUp').onclick=()=>{gear=Math.min(gear+1,4);toast(['Üres','1. fokozat','2. fokozat','3. fokozat','4. fokozat'][gear])};
 document.getElementById('gearDown').onclick=()=>{gear=Math.max(gear-1,-1);toast(gear===-1?'Hátramenet':gear===0?'Üres':gear+'. fokozat')};
@@ -227,6 +232,7 @@ let trackTimer=0, viewMode=0;
 document.getElementById('view').onclick=()=>{viewMode=(viewMode+1)%2;toast(viewMode?'Vezetőfülke-nézet':'Külső kamera')};
 // Motorhang – csak a játékos indítása után aktiválódik
 let audioCtx=null,engineOsc=null,engineGain=null;
+function playTone(freq=660,duration=.12){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.08,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+duration)}catch(e){}}
 function startEngineSound(){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();engineOsc=audioCtx.createOscillator();engineGain=audioCtx.createGain();const filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=180;engineOsc.type='sawtooth';engineOsc.frequency.value=38;engineGain.gain.value=.018;engineOsc.connect(filter);filter.connect(engineGain);engineGain.connect(audioCtx.destination);engineOsc.start()}catch(e){}}
 // Kipufogófüst és vezetőfülke kezelőszervek
 const smokeMat=new THREE.MeshBasicMaterial({color:0x777b7b,transparent:true,opacity:.22,depthWrite:false});const smoke=[];for(let i=0;i<16;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.09+Math.random()*.07,6,5),smokeMat.clone());p.visible=false;scene.add(p);smoke.push({mesh:p,life:0})}
@@ -251,8 +257,10 @@ if(speed>2){trackTimer+=dt;if(trackTimer>.18){trackTimer=0;for(const side of [-1
 if(speed>3&&Math.random()<.38){const item=dust.find(d=>d.life<=0);if(item){item.life=1.2;item.mesh.visible=true;item.mesh.position.set(tractor.position.x-Math.sin(heading)*2+(Math.random()-.5)*1.5,.35,tractor.position.z+Math.cos(heading)*2+(Math.random()-.5)*1.5);item.mesh.scale.setScalar(.7+Math.random()*1.8)}}
 dust.forEach(d=>{if(d.life>0){d.life-=dt;d.mesh.position.y+=dt*.7;d.mesh.position.x+=(Math.random()-.5)*dt*.5;d.mesh.material.opacity=Math.max(0,d.life*.2);if(d.life<=0)d.mesh.visible=false}});
 const onField=Math.abs(tractor.position.x)<23&&tractor.position.z< -25&&tractor.position.z> -59;
-if(working&&onField&&speed>1){worked+=dt; if(worked>7){money+=100;worked=0;document.getElementById('money').textContent=money.toLocaleString('hu-HU');toast('Szép munka! +100 Ft')}} 
-document.getElementById('speed').textContent=Math.round(speed*1.7);document.getElementById('gear').textContent=gear===-1?'R • Hátramenet':gear===0?'N • Üres':gear+'. fokozat';document.getElementById('rpm').textContent=engineOn?Math.round(650+(controls.gas?650:0)+speed*105):0;document.getElementById('task').textContent=onField?'Földmunka':'Menj a földre!';
+if(onField&&missionIndex===1)nextMission();
+if(working&&onField&&speed>1){worked+=dt;missionWork+=dt;if(worked>7){money+=100;worked=0;document.getElementById('money').textContent=money.toLocaleString('hu-HU');toast('Szép munka! +100 Ft');playTone(520,.1)}if(missionIndex===2&&missionWork>=20)nextMission();if(missionIndex===3&&money>=500)nextMission();}
+if(Math.floor(performance.now()/5000)!==Math.floor((performance.now()-dt*1000)/5000))saveGame(false); 
+document.getElementById('speed').textContent=Math.round(speed*1.7);document.getElementById('gear').textContent=gear===-1?'R • Hátramenet':gear===0?'N • Üres':gear+'. fokozat';document.getElementById('rpm').textContent=engineOn?Math.round(650+(controls.gas?650:0)+speed*105):0;document.getElementById('task').textContent=missionNames[missionIndex];document.getElementById('help').textContent='AKTUÁLIS FELADAT: '+missionNames[missionIndex]+' | Pénz: '+money.toLocaleString('hu-HU')+' Ft | A MENTÉS gombbal elmentheted az állásod.';
 }
 
 // Lassan sodródó felhők a távoli égbolton
