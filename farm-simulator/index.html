@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#151515"><meta name="description" content="MTZ Farm Simulator – 3D traktoros játék magyarul">
+<link rel="manifest" href="manifest.json">
+<title>MTZ FARM SIMULATOR</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:Arial,sans-serif;touch-action:none}#game{position:absolute;inset:0}canvas{display:block}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}.badge{background:#171717dd;border:1px solid #e43b32;border-radius:10px;padding:8px 11px;font-weight:bold;text-shadow:0 1px 2px #000}.small{font-size:12px;color:#ddd;font-weight:normal}
+#help{position:absolute;top:64px;left:10px;background:#111c;padding:8px 10px;border-radius:8px;font-size:12px;max-width:220px;line-height:1.4}
+#controls{position:absolute;bottom:15px;left:0;right:0;display:flex;justify-content:space-between;align-items:end;padding:0 15px;gap:10px}.cluster{display:flex;gap:8px;align-items:end}.btn{width:66px;height:66px;border-radius:50%;border:2px solid #ddd;background:#202020dd;color:white;font-size:23px;font-weight:bold;box-shadow:0 3px 8px #0008;touch-action:none}.btn:active,.btn.active{background:#c52b25;border-color:#ffb0aa}.pedal{width:65px;height:82px;border-radius:13px;font-size:14px}.wide{width:76px;height:54px;border-radius:12px;font-size:12px}
+#toast{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);background:#111e;border:1px solid #e43b32;padding:13px 18px;border-radius:12px;display:none;text-align:center}
+#start{position:absolute;inset:0;background:linear-gradient(#101010dd,#101010bb),radial-gradient(ellipse at center,#40502d,#111);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+.card{max-width:420px;background:#171717ee;border:1px solid #d8342c;border-radius:18px;padding:24px;box-shadow:0 12px 40px #0009}.card h1{margin:0 0 8px;color:#f04438;font-size:30px}.card p{line-height:1.5;color:#ddd}.mainbtn{border:0;background:#d8322b;color:white;font-weight:bold;font-size:18px;padding:14px 26px;border-radius:12px}
+@media(min-width:800px){.btn{width:76px;height:76px}.pedal{height:90px}}
+</style>
+</head>
+<body><div id="game"></div>
+<div id="top"><div class="badge">🚜 MTZ FARM <div class="small">SIMULATOR • BÉTA</div></div><div class="badge"><span id="speed">0</span> km/h<br><span class="small" id="gear">Üres</span></div><div class="badge">💰 <span id="money">0</span> Ft<br><span class="small" id="task">Menj a földre!</span></div></div>
+<div id="help">Feladat: hajts a barna földterületre, majd használd a MUNKA gombot. A nyilakkal kormányozhatsz.</div>
+<div id="controls">
+ <div class="cluster"><button class="btn" data-control="left">◀</button><button class="btn" data-control="right">▶</button></div>
+ <div class="cluster"><button class="btn wide" id="work">MUNKA</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
+</div>
+<div id="toast"></div>
+<div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">A játék első, fejlesztés alatt álló változata. A traktor és a gépek 3D-s játékmodellként szerepelnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=>{
+const mount=document.getElementById('game');if(!window.THREE){mount.innerHTML='<div style="padding:30px">A 3D motor nem töltődött be. Ellenőrizd az internetkapcsolatot.</div>';return}
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc5d4);scene.fog=new THREE.Fog(0x9fc5d4,75,190);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,300);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe5f2ff,0x667044,1.35));const sun=new THREE.DirectionalLight(0xffedcf,1.35);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+const grass=mat(0x55753b),soil=mat(0x75502e),red=mat(0xc92b22),darkred=mat(0x741a17),rubber=mat(0x171717),rim=mat(0xaaa9a0),glass= new THREE.MeshStandardMaterial({color:0x9dc8d2,metalness:.15,roughness:.25,transparent:true,opacity:.65}),metal=mat(0x777b78);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),grass);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
+const field=new THREE.Mesh(new THREE.PlaneGeometry(46,34),soil);field.rotation.x=-Math.PI/2;field.position.set(0,.005,-42);field.receiveShadow=true;scene.add(field);
+for(let i=0;i<17;i++){const row=new THREE.Mesh(new THREE.BoxGeometry(45,.035,.12),mat(0x49301f));row.position.set(0,.03,-27-i*.92);scene.add(row)}
+// Farm buildings, trees and fence
+function box(w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+box(16,5,10,mat(0xb6a17d),-28,2.5,-30);const roof=box(18,1,12,mat(0x8c2922),-28,5.5,-30);roof.rotation.z=.04;
+box(4,3,.25,mat(0x43352b),-28,1.5,-24.8);
+for(let i=0;i<24;i++){let x=(i%6)*10-27,z=Math.floor(i/6)*13-55;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.25,.35,2.2,7),mat(0x59402a));trunk.position.set(x,1,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.SphereGeometry(2.2,8,7),mat(0x315b30));crown.position.set(x,3.1,z);crown.castShadow=true;scene.add(crown)}
+for(let i=0;i<22;i++){box(.18,.8,.18,mat(0xddd1a9),-25+i*2.3,.4,-12);box(.18,.8,.18,mat(0xddd1a9),-25+i*2.3,.4,-72)}
+// Tractor group, facing -Z
+const tractor=new THREE.Group();scene.add(tractor);
+const chassis=new THREE.Mesh(new THREE.BoxGeometry(2.15,.65,3.7),darkred);chassis.position.set(0,1.25,0);chassis.castShadow=true;tractor.add(chassis);
+const hood=new THREE.Mesh(new THREE.BoxGeometry(1.8,.95,1.85),red);hood.position.set(0,1.78,-1.05);hood.castShadow=true;tractor.add(hood);
+const cab=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.65,1.65),glass);cab.position.set(0,2.65,.65);cab.castShadow=true;tractor.add(cab);
+const cabtop=new THREE.Mesh(new THREE.BoxGeometry(1.95,.16,1.9),red);cabtop.position.set(0,3.52,.65);tractor.add(cabtop);
+const exhaust=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.8,8),rubber);exhaust.position.set(.6,2.65,-1.5);tractor.add(exhaust);
+const wheels=[];
+function wheel(x,z,r){const g=new THREE.Group();g.position.set(x,r,z);const tire=new THREE.Mesh(new THREE.CylinderGeometry(r,r,.48,18),rubber);tire.rotation.z=Math.PI/2;tire.castShadow=true;g.add(tire);const hub=new THREE.Mesh(new THREE.CylinderGeometry(r*.48,r*.48,.5,12),rim);hub.rotation.z=Math.PI/2;g.add(hub);for(let k=0;k<12;k++){const lug=new THREE.Mesh(new THREE.BoxGeometry(.09,.12,.45),mat(0x292929));lug.position.set(0,Math.sin(k*Math.PI/6)*r*.83,Math.cos(k*Math.PI/6)*r*.83);g.add(lug)}tractor.add(g);wheels.push(g)}
+wheel(-1.13,-1.25,.72);wheel(1.13,-1.25,.72);wheel(-1.13,1.35,.98);wheel(1.13,1.35,.98);
+for(let x of [-.65,.65]){const lamp=new THREE.Mesh(new THREE.BoxGeometry(.35,.25,.1),mat(0xffe8a1));lamp.position.set(x,1.85,-2);tractor.add(lamp)}
+const hitch=box(.5,.3,.8,metal,0,.35,0);tractor.remove(hitch);tractor.add(hitch);hitch.position.set(0,.55,2.15);
+const plow=new THREE.Group();tractor.add(plow);const beam=new THREE.Mesh(new THREE.BoxGeometry(2.6,.12,.18),metal);beam.position.set(0,.35,2.65);plow.add(beam);for(let i=0;i<3;i++){let blade=new THREE.Mesh(new THREE.BoxGeometry(.14,.9,.5),mat(0x656968));blade.position.set(-.8+i*.8,.0,2.8);blade.rotation.x=-.25;plow.add(blade)}plow.visible=false;
+let speed=0,heading=0,money=0,working=false,worked=0;const controls={left:false,right:false,gas:false,brake:false};let started=false;
+tractor.position.set(0,0,12);
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2100)}
+document.querySelectorAll('[data-control]').forEach(b=>{const k=b.dataset.control;const on=e=>{e.preventDefault();controls[k]=true;b.classList.add('active')},off=e=>{e.preventDefault();controls[k]=false;b.classList.remove('active')};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,off))});
+document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';started=true;toast('Indulhat a munka! Hajts a föld felé.')};
+document.getElementById('work').onclick=()=>{if(Math.abs(tractor.position.x)<25&&tractor.position.z< -24&&tractor.position.z> -62){working=!working;plow.visible=working;toast(working?'A földmunka elkezdődött!':'A földmunka szünetel.')}else toast('Hajts a barna földterületre!')};
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
+if(started){if(controls.gas)speed=Math.min(speed+dt*3.3,13);else if(controls.brake)speed=Math.max(speed-dt*8,0);else speed*=Math.pow(.985,dt*60);
+if(controls.left)heading+=dt*(.8+speed*.035);if(controls.right)heading-=dt*(.8+speed*.035);
+tractor.rotation.y=heading;tractor.position.x+=Math.sin(heading)*speed*dt;tractor.position.z-=Math.cos(heading)*speed*dt;
+tractor.position.x=THREE.MathUtils.clamp(tractor.position.x,-95,95);tractor.position.z=THREE.MathUtils.clamp(tractor.position.z,-95,95);
+wheels.forEach(w=>w.rotation.x-=speed*dt*1.6);
+const onField=Math.abs(tractor.position.x)<23&&tractor.position.z< -25&&tractor.position.z> -59;
+if(working&&onField&&speed>1){worked+=dt; if(worked>7){money+=100;worked=0;document.getElementById('money').textContent=money.toLocaleString('hu-HU');toast('Szép munka! +100 Ft')}} 
+document.getElementById('speed').textContent=Math.round(speed*1.7);document.getElementById('gear').textContent=speed>0.5?'Előremenet':'Üres';document.getElementById('task').textContent=onField?'Földmunka':'Menj a földre!';
+}
+const target=new THREE.Vector3(tractor.position.x,1.5,tractor.position.z);const behind=new THREE.Vector3(Math.sin(heading)*8,5.5,Math.cos(heading)*8);camera.position.lerp(target.clone().add(behind),.09);camera.lookAt(target.x,1.5,target.z-2);
+renderer.render(scene,camera)}
+animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+})();
+</script></body></html>
