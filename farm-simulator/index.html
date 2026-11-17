@@ -59,6 +59,24 @@ const seat=new THREE.Mesh(new THREE.BoxGeometry(.62,.72,.58),mat(0x292522));seat
 const seatBack=new THREE.Mesh(new THREE.BoxGeometry(.62,.65,.16),mat(0x292522));seatBack.position.set(0,2.48,1.0);seatBack.rotation.x=-.12;tractor.add(seatBack);
 const steering=new THREE.Mesh(new THREE.TorusGeometry(.27,.035,8,24),blackMetal);steering.position.set(0,2.65,-.02);steering.rotation.x=1.12;tractor.add(steering);
 const dash=new THREE.Mesh(new THREE.BoxGeometry(.95,.2,.35),blackMetal);dash.position.set(0,2.35,-.23);tractor.add(dash);
+// Vezetői műszerfal: órák, mutatók, kapcsolók és váltókar
+const gaugeFaces=[];
+for(let i=0;i<3;i++){
+ const face=new THREE.Mesh(new THREE.CircleGeometry(.145,24),mat(0x111817,.35));
+ face.position.set(-.29+i*.29,2.48,-.43);tractor.add(face);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.15,.018,7,24),steel);
+ ring.position.copy(face.position);tractor.add(ring);
+ const needle=new THREE.Mesh(new THREE.BoxGeometry(.012,.105,.018),mat(0xff4a36));
+ needle.position.set(face.position.x,2.49,-.405);needle.rotation.z=-.35;tractor.add(needle);gaugeFaces.push(needle);
+ for(let k=0;k<9;k++){const tick=new THREE.Mesh(new THREE.BoxGeometry(.012,.025,.012),steel);const a=(k/8)*Math.PI-Math.PI/2;tick.position.set(face.position.x+Math.cos(a)*.112,2.48+Math.sin(a)*.112,-.405);tractor.add(tick)}
+}
+const gearBase=new THREE.Mesh(new THREE.CylinderGeometry(.12,.15,.12,12),blackMetal);gearBase.position.set(.48,2.28,.05);tractor.add(gearBase);
+const gearLever=new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,.48,8),steel);gearLever.position.set(.48,2.53,.05);gearLever.rotation.x=-.22;tractor.add(gearLever);
+const gearKnob=new THREE.Mesh(new THREE.SphereGeometry(.075,12,10),rubber);gearKnob.position.set(.48,2.78,-.005);tractor.add(gearKnob);
+// Kormányoszlop és pedálok
+const column=new THREE.Mesh(new THREE.CylinderGeometry(.055,.075,.55,10),blackMetal);column.position.set(0,2.42,-.04);column.rotation.x=-.35;tractor.add(column);
+for(let i=0;i<2;i++){const pedal=new THREE.Mesh(new THREE.BoxGeometry(.16,.055,.22),steel);pedal.position.set(-.22+i*.42,1.55,-.42);pedal.rotation.x=-.25;tractor.add(pedal)}
+
 // Visszapillantó tükrök
 for(const x of [-1.02,1.02]){const arm=new THREE.Mesh(new THREE.BoxGeometry(.045,.48,.045),steel);arm.position.set(x,3.0,.25);arm.rotation.z=x>0?-.12:.12;tractor.add(arm);const mirror=new THREE.Mesh(new THREE.BoxGeometry(.22,.3,.08),blackMetal);mirror.position.set(x*1.04,3.22,.25);tractor.add(mirror)}
 // Sárvédők és fellépők
@@ -92,7 +110,7 @@ for(let i=0;i<34;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.12+Math.r
 const trackMat= new THREE.MeshBasicMaterial({color:0x493724,transparent:true,opacity:.75});
 const tracks=[];
 function addTrack(x,z){const t=new THREE.Mesh(new THREE.BoxGeometry(.22,.018,.9),trackMat);t.position.set(x,.015,z);t.rotation.y=heading;scene.add(t);tracks.push(t);if(tracks.length>240){scene.remove(tracks.shift())}}
-let trackTimer=0, viewMode=0;
+let trackTimer=0, viewMode=1;
 document.getElementById('view').onclick=()=>{viewMode=(viewMode+1)%2;toast(viewMode?'Vezetőfülke-nézet':'Külső kamera')};
 // Motorhang – csak a játékos indítása után aktiválódik
 let audioCtx=null,engineOsc=null,engineGain=null;
@@ -103,7 +121,7 @@ if(started){if(controls.gas)speed=Math.min(speed+dt*3.3,13);else if(controls.bra
 if(controls.left)heading+=dt*(.8+speed*.035);if(controls.right)heading-=dt*(.8+speed*.035);
 tractor.rotation.y=heading;tractor.position.x+=Math.sin(heading)*speed*dt;tractor.position.z-=Math.cos(heading)*speed*dt;
 tractor.position.x=THREE.MathUtils.clamp(tractor.position.x,-95,95);tractor.position.z=THREE.MathUtils.clamp(tractor.position.z,-95,95);
-wheels.forEach(w=>w.rotation.x-=speed*dt*1.6);
+wheels.forEach(w=>w.rotation.x-=speed*dt*1.6);steering.rotation.z=(controls.left?-.55:0)+(controls.right?.55:0);gaugeFaces.forEach((n,i)=>{n.rotation.z=-.35-Math.min(speed/13,1)*(i===0?1.1:.65)});
 if(engineOsc&&audioCtx){engineOsc.frequency.setTargetAtTime(35+speed*3.8,audioCtx.currentTime,.12);engineGain.gain.setTargetAtTime(.012+speed*.0018,audioCtx.currentTime,.15)}
 if(speed>2){trackTimer+=dt;if(trackTimer>.18){trackTimer=0;for(const side of [-1,1])addTrack(tractor.position.x+Math.cos(heading)*side*.92,tractor.position.z+Math.sin(heading)*side*.92)}}
 if(speed>3&&Math.random()<.38){const item=dust.find(d=>d.life<=0);if(item){item.life=1.2;item.mesh.visible=true;item.mesh.position.set(tractor.position.x-Math.sin(heading)*2+(Math.random()-.5)*1.5,.35,tractor.position.z+Math.cos(heading)*2+(Math.random()-.5)*1.5);item.mesh.scale.setScalar(.7+Math.random()*1.8)}}
