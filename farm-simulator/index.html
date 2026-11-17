@@ -31,13 +31,17 @@
 const mount=document.getElementById('game');if(!window.THREE){mount.innerHTML='<div style="padding:30px">A 3D motor nem töltődött be. Ellenőrizd az internetkapcsolatot.</div>';return}
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc5d4);scene.fog=new THREE.Fog(0x9fc5d4,75,190);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,300);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;mount.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xe5f2ff,0x667044,1.35));const sun=new THREE.DirectionalLight(0xffedcf,1.35);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.physicallyCorrectLights=true;mount.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe5f2ff,0x667044,1.35));const sun=new THREE.DirectionalLight(0xffedcf,1.35);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.bias=-.00018;scene.add(sun);
 const mat=(c,r=.9)=>new THREE.MeshStandardMaterial({color:c,roughness:r});
+function noiseTexture(base,spots,seed=1){const c=document.createElement("canvas");c.width=c.height=512;const ctx=c.getContext("2d");ctx.fillStyle=base;ctx.fillRect(0,0,512,512);let x=seed;const rnd=()=>{x=(x*1664525+1013904223)>>>0;return x/4294967296};for(let i=0;i<18000;i++){const a=spots[Math.floor(rnd()*spots.length)];ctx.globalAlpha=.08+rnd()*.22;ctx.fillStyle=a;const w=1+rnd()*5;ctx.fillRect(rnd()*512,rnd()*512,w,w)}ctx.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}
+const grassTex=noiseTexture("#526b38",["#82934d","#344b29","#a0a064","#5e7741"],7);grassTex.repeat.set(18,18);
+const dirtTex=noiseTexture("#72502f",["#9b7548","#46301f","#b18b5b","#59402a"],21);dirtTex.repeat.set(5,4);
+const paintTex=noiseTexture("#b9251e",["#e24a38","#751b17","#d43a2c"],31);paintTex.repeat.set(1,1);
 const blackMetal=mat(0x252829,.55),steel=mat(0x9a9e9b,.38),rubberSide=mat(0x303232,.95),lampMat=new THREE.MeshStandardMaterial({color:0xffe6a6,emissive:0x8a6a27,emissiveIntensity:.35});
-const grass=mat(0x55753b),soil=mat(0x75502e),red=mat(0xc92b22),darkred=mat(0x741a17),rubber=mat(0x171717),rim=mat(0xaaa9a0),glass= new THREE.MeshStandardMaterial({color:0x9dc8d2,metalness:.15,roughness:.25,transparent:true,opacity:.65}),metal=mat(0x777b78);
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),grass);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
-const field=new THREE.Mesh(new THREE.PlaneGeometry(46,34),soil);field.rotation.x=-Math.PI/2;field.position.set(0,.005,-42);field.receiveShadow=true;scene.add(field);
+const grass=mat(0x55753b),soil=mat(0x75502e),red=new THREE.MeshStandardMaterial({color:0xc92b22,roughness:.3,metalness:.22}),darkred=new THREE.MeshStandardMaterial({color:0x741a17,roughness:.42,metalness:.18}),rubber=mat(0x171717,.98),rim=new THREE.MeshStandardMaterial({color:0xaaa9a0,roughness:.32,metalness:.72}),glass=new THREE.MeshPhysicalMaterial({color:0x9dc8d2,metalness:.05,roughness:.08,transparent:true,opacity:.28,clearcoat:1,side:THREE.DoubleSide}),metal=new THREE.MeshStandardMaterial({color:0x777b78,roughness:.3,metalness:.8});
+grass.map=grassTex;grass.roughness=.98;const ground=new THREE.Mesh(new THREE.PlaneGeometry(220,220),grass);ground.rotation.x=-Math.PI/2;ground.position.y=-.12;ground.receiveShadow=true;scene.add(ground);
+soil.map=dirtTex;soil.roughness=1;const field=new THREE.Mesh(new THREE.PlaneGeometry(46,34),soil);field.rotation.x=-Math.PI/2;field.position.set(0,.005,-42);field.receiveShadow=true;scene.add(field);
 for(let i=0;i<17;i++){const row=new THREE.Mesh(new THREE.BoxGeometry(45,.035,.12),mat(0x49301f));row.position.set(0,.03,-27-i*.92);scene.add(row)}
 // Farm buildings, trees and fence
 function box(w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
@@ -47,7 +51,7 @@ for(let i=0;i<24;i++){let x=(i%6)*10-27,z=Math.floor(i/6)*13-55;const trunk=new 
 for(let i=0;i<22;i++){box(.18,.8,.18,mat(0xddd1a9),-25+i*2.3,.4,-12);box(.18,.8,.18,mat(0xddd1a9),-25+i*2.3,.4,-72)}
 // Tractor group, facing -Z
 const tractor=new THREE.Group();scene.add(tractor);
-const chassis=new THREE.Mesh(new THREE.BoxGeometry(2.15,.65,3.7),darkred);chassis.position.set(0,1.25,0);chassis.castShadow=true;tractor.add(chassis);
+red.map=paintTex;const chassis=new THREE.Mesh(new THREE.BoxGeometry(2.15,.65,3.7),darkred);chassis.position.set(0,1.25,0);chassis.castShadow=true;tractor.add(chassis);
 const hood=new THREE.Mesh(new THREE.BoxGeometry(1.8,.95,1.85),red);hood.position.set(0,1.78,-1.05);hood.castShadow=true;tractor.add(hood);
 const cab=new THREE.Mesh(new THREE.BoxGeometry(1.7,1.65,1.65),glass);cab.position.set(0,2.65,.65);cab.castShadow=true;tractor.add(cab);
 const cabtop=new THREE.Mesh(new THREE.BoxGeometry(1.95,.16,1.9),red);cabtop.position.set(0,3.52,.65);cabtop.castShadow=true;tractor.add(cabtop);
@@ -121,6 +125,8 @@ let audioCtx=null,engineOsc=null,engineGain=null;
 function startEngineSound(){try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();engineOsc=audioCtx.createOscillator();engineGain=audioCtx.createGain();const filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=180;engineOsc.type='sawtooth';engineOsc.frequency.value=38;engineGain.gain.value=.018;engineOsc.connect(filter);filter.connect(engineGain);engineGain.connect(audioCtx.destination);engineOsc.start()}catch(e){}}
 // Kipufogófüst és vezetőfülke kezelőszervek
 const smokeMat=new THREE.MeshBasicMaterial({color:0x777b7b,transparent:true,opacity:.22,depthWrite:false});const smoke=[];for(let i=0;i<16;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.09+Math.random()*.07,6,5),smokeMat.clone());p.visible=false;scene.add(p);smoke.push({mesh:p,life:0})}
+// Részletesebb anyaghatás: por, festékfény és napszakos fényelés
+const ambientFill=new THREE.DirectionalLight(0xc5d8e8,.28);ambientFill.position.set(18,12,-25);scene.add(ambientFill);
 const clock=new THREE.Clock();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
 if(started){
