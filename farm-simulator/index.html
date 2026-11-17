@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#151515"><meta name="description" content="MTZ Farm Simulator – 3D traktoros játék magyarul">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg" type="image/svg+xml"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <title>MTZ FARM SIMULATOR</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:Arial,sans-serif;touch-action:none}#game{position:absolute;inset:0}canvas{display:block}
@@ -12,7 +12,7 @@
 #controls{position:absolute;bottom:15px;left:0;right:0;display:flex;justify-content:space-between;align-items:end;padding:0 15px;gap:10px}.cluster{display:flex;gap:8px;align-items:end}.btn{width:66px;height:66px;border-radius:50%;border:2px solid #ddd;background:#202020dd;color:white;font-size:23px;font-weight:bold;box-shadow:0 3px 8px #0008;touch-action:none}.btn:active,.btn.active{background:#c52b25;border-color:#ffb0aa}.pedal{width:65px;height:82px;border-radius:13px;font-size:14px}.wide{width:76px;height:54px;border-radius:12px;font-size:12px}
 #toast{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);background:#111e;border:1px solid #e43b32;padding:13px 18px;border-radius:12px;display:none;text-align:center}
 #start{position:absolute;inset:0;background:linear-gradient(#101010dd,#101010bb),radial-gradient(ellipse at center,#40502d,#111);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
-.card{max-width:420px;background:#171717ee;border:1px solid #d8342c;border-radius:18px;padding:24px;box-shadow:0 12px 40px #0009}.card h1{margin:0 0 8px;color:#f04438;font-size:30px}.card p{line-height:1.5;color:#ddd}.mainbtn{border:0;background:#d8322b;color:white;font-weight:bold;font-size:18px;padding:14px 26px;border-radius:12px}
+.card{max-width:420px;background:#171717ee;border:1px solid #d8342c;border-radius:18px;padding:24px;box-shadow:0 12px 40px #0009}.card h1{margin:0 0 8px;color:#f04438;font-size:30px}.card p{line-height:1.5;color:#ddd}.mainbtn{border:0;background:#d8322b;color:white;font-weight:bold;font-size:18px;padding:14px 26px;border-radius:12px}.installbtn{display:none;margin-top:10px;border:1px solid #eee;background:#252525;color:#fff;font-weight:bold;font-size:15px;padding:12px 18px;border-radius:12px}
 @media(min-width:800px){.btn{width:76px;height:76px}.pedal{height:90px}}@media(max-width:600px){
  html,body{height:100%;height:100dvh}
  #top{top:6px;left:6px;right:6px;gap:4px}
@@ -50,9 +50,9 @@
  <div class="cluster"><button class="btn wide" id="view">KAMERA</button><button class="btn wide" id="gearDown">− FOKOZAT</button><button class="btn wide" id="gearUp">+ FOKOZAT</button><button class="btn wide" id="engine">MOTOR BE</button><button class="btn wide" id="lights">LÁMPA</button><button class="btn wide" id="work">MUNKA</button><button class="btn wide" id="save">MENTÉS</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
 </div>
 <div id="toast"></div>
-<div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Telefonra optimalizált MTZ-82 traktoros szimulátor. A traktor részletei és kezelőszervei folyamatosan bővülnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
+<div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Telefonra optimalizált MTZ-82 traktoros szimulátor. A traktor részletei és kezelőszervei folyamatosan bővülnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button><br><button class="installbtn" id="install">📲 APP TELEPÍTÉSE</button><p class="small" id="installHelp">A játék telepíthető a telefon kezdőképernyőjére. A motorhang és a mentés az alkalmazásban is működik.</p></div></div>
 <script>
-(()=>{
+(()=>{\nlet installPrompt=null;const installButton=document.getElementById('install');const installHelp=document.getElementById('installHelp');window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;installButton.style.display='inline-block';});installButton.addEventListener('click',async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;installButton.style.display='none';}else{installHelp.textContent='Chrome menü (⋮) → Alkalmazás telepítése vagy Hozzáadás a kezdőképernyőhöz.';}});window.addEventListener('appinstalled',()=>{installButton.style.display='none';installHelp.textContent='Az MTZ FARM SIMULATOR telepítve van a telefonodra!';});
 window.addEventListener('error',e=>{const m=document.getElementById('start');if(m){m.style.display='flex';m.innerHTML='<div class="card"><h1>INDÍTÁSI HIBA</h1><p style="color:#fff">'+String(e.message||'Ismeretlen hiba').replace(/[<>]/g,'')+'</p><p>Frissítsd az oldalt. Ha továbbra sem indul, küldd el ezt a hibaüzenetet.</p><button class="mainbtn" onclick="location.reload()">ÚJRAPRÓBÁLÁS</button></div>'}});
 const startGame=()=>{
 
