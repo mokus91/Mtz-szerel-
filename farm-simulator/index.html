@@ -50,7 +50,7 @@
  <div class="cluster"><button class="btn wide" id="view">KAMERA</button><button class="btn wide" id="gearDown">− FOKOZAT</button><button class="btn wide" id="gearUp">+ FOKOZAT</button><button class="btn wide" id="engine">MOTOR BE</button><button class="btn wide" id="lights">LÁMPA</button><button class="btn wide" id="work">MUNKA</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
 </div>
 <div id="toast"></div>
-<div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Ingyenes, telefonra optimalizált 3D traktoros játék. A játék internetkapcsolatot igényel a 3D motor betöltéséhez.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
+<div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Telefonra optimalizált MTZ-82 traktoros szimulátor. A traktor részletei és kezelőszervei folyamatosan bővülnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
 <script>
 (()=>{
 const startGame=()=>{
@@ -124,7 +124,60 @@ function wheel(x,z,r){const g=new THREE.Group();g.position.set(x,r,z);const tire
 // Mély, tagolt mezőgazdasági gumiminta
 for(let k=0;k<24;k++){const a=k*Math.PI/12;for(const side of [-1,1]){const tread=new THREE.Mesh(new THREE.BoxGeometry(.52,.15,.19),rubberSide);tread.position.set(side*.08,Math.sin(a)*r*.91,Math.cos(a)*r*.91);tread.rotation.x=-a*.18;tread.castShadow=true;g.add(tread)}}
 const sidewall=new THREE.Mesh(new THREE.TorusGeometry(r*.73,.035,6,24),rubberSide);sidewall.rotation.y=Math.PI/2;sidewall.position.x=.247;g.add(sidewall);tractor.add(g);wheels.push(g);if(z<0)frontWheels.push(g)}
+
 wheel(-1.13,-1.25,.72);wheel(1.13,-1.25,.72);wheel(-1.13,1.35,.98);wheel(1.13,1.35,.98);
+// MTZ-82 jellegzetes részletek: első súlyok, tengely, kerékagyak és hidraulika
+const detailMat=mat(0x555b59,.48),boltMat=mat(0xc4c5bd,.32),glassRubber=mat(0x171b1b,.72);
+function tractorBox(w,h,d,m,x,y,z,rz=0){const q=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);q.position.set(x,y,z);q.rotation.z=rz;q.castShadow=true;q.receiveShadow=true;tractor.add(q);return q}
+function tractorCylinder(rt,rb,h,m,x,y,z,rotX=0){const q=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,16),m);q.position.set(x,y,z);q.rotation.x=rotX;q.castShadow=true;tractor.add(q);return q}
+// Első híd és differenciálműház
+tractorCylinder(.25,.28,.85,detailMat,0,.78,-1.22,Math.PI/2);
+tractorBox(2.15,.18,.22,detailMat,0,.78,-1.22);
+// Jellegzetes orrsúlyok
+for(let i=0;i<4;i++){const wt=tractorBox(1.12,.13,.24,detailMat,0,.82-i*.13,-2.18-i*.035);wt.rotation.x=-.08}
+// Hűtőrács kerete, lámpakeretek és első irányjelzők
+tractorBox(1.35,.78,.09,steel,0,1.58,-2.105);
+tractorBox(1.17,.61,.10,blackMetal,0,1.58,-2.17);
+for(const x of [-.73,.73]){
+ const bezel=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.07,24),steel);bezel.rotation.x=Math.PI/2;bezel.position.set(x,1.93,-2.13);tractor.add(bezel);
+ const lens=new THREE.Mesh(new THREE.CircleGeometry(.145,24),lampMat);lens.position.set(x,1.93,-2.175);tractor.add(lens);
+ const indicator=tractorBox(.16,.11,.07,mat(0xffa52b),x,1.73,-2.14);
+}
+// Motorháztető illesztések és oldalsó burkolatvonalak
+for(const side of [-1,1]){
+ tractorBox(.045,.62,1.55,steel,side*.918,1.76,-1.08);
+ for(let j=0;j<8;j++)tractorBox(.025,.29,.035,blackMetal,side*.946,1.73,-1.65+j*.15);
+ tractorBox(.08,.16,.46,detailMat,side*.94,1.35,-.55);
+ // Hátsó sárvédő külső merevítője
+ tractorBox(.07,.18,1.62,darkred,side*1.48,1.96,1.3);
+}
+// Kipufogó és légszűrő különálló csövei, bilincsei
+const intake=tractorCylinder(.095,.12,.92,blackMetal,-.58,2.45,-1.45);
+tractorCylinder(.13,.13,.07,steel,-.58,2.91,-1.45);
+tractorBox(.19,.055,.055,steel,.6,2.35,-1.5);
+// Hátsó hárompont-függesztés és TLT
+tractorCylinder(.12,.12,.38,steel,0,.72,2.13,Math.PI/2);
+for(const side of [-1,1]){
+ const arm=tractorBox(.11,.11,1.05,steel,side*.72,.55,2.0,-.16);
+ const lift=tractorBox(.075,.075,.78,detailMat,side*.55,1.03,1.55,.32);
+ tractorCylinder(.075,.075,.12,boltMat,side*1.13,1.35,1.35,Math.PI/2);
+}
+// Kabinablak-törlők, ajtókilincs, fellépő bordázat és hátsó lámpák
+tractorBox(.025,.42,.035,blackMetal,.25,3.08,-.205,-.22);
+tractorBox(.045,.12,.035,steel,.88,2.58,.72);
+for(const side of [-1,1])for(let i=0;i<4;i++)tractorBox(.32,.025,.035,steel,side*1.18,.78+i*.045,.55);
+// Kerékagy középsapkák és csavarfejek
+for(const [x,z,rad] of [[-1.13,-1.25,.72],[1.13,-1.25,.72],[-1.13,1.35,.98],[1.13,1.35,.98]]){
+ const cap=new THREE.Mesh(new THREE.CylinderGeometry(rad*.25,rad*.25,.53,16),steel);cap.rotation.z=Math.PI/2;cap.position.set(x+(x>0?.27:-.27),rad,z);tractor.add(cap);
+ for(let k=0;k<8;k++){const a=k*Math.PI/4;const b=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),boltMat);b.position.set(x+(x>0?.278:-.278),rad+Math.sin(a)*rad*.38,z+Math.cos(a)*rad*.38);tractor.add(b)}
+}
+// Apró MTZ embléma a motorháztető oldalán
+const emblemCanvas=document.createElement('canvas');emblemCanvas.width=256;emblemCanvas.height=96;
+const ec=emblemCanvas.getContext('2d');ec.fillStyle='#9b1f1b';ec.fillRect(0,0,256,96);ec.strokeStyle='#e7e0cf';ec.lineWidth=5;ec.strokeRect(4,4,248,88);ec.fillStyle='#fff4df';ec.font='bold 54px Arial';ec.textAlign='center';ec.fillText('MTZ-82',128,67);
+const emblemTex=new THREE.CanvasTexture(emblemCanvas);
+const emblemMat=new THREE.MeshBasicMaterial({map:emblemTex,side:THREE.DoubleSide});
+for(const side of [-1,1]){const e=new THREE.Mesh(new THREE.PlaneGeometry(.78,.29),emblemMat);e.position.set(side*.925,1.78,-.95);e.rotation.y=side>0?Math.PI/2:-Math.PI/2;tractor.add(e)}
+
 for(let x of [-.65,.65]){const lamp=new THREE.Mesh(new THREE.BoxGeometry(.35,.25,.1),mat(0xffe8a1));lamp.position.set(x,1.85,-2);tractor.add(lamp)}
 const hitch=box(.5,.3,.8,metal,0,.35,0);tractor.remove(hitch);tractor.add(hitch);hitch.position.set(0,.55,2.15);
 const plow=new THREE.Group();tractor.add(plow);const beam=new THREE.Mesh(new THREE.BoxGeometry(2.6,.12,.18),metal);beam.position.set(0,.35,2.65);plow.add(beam);for(let i=0;i<3;i++){let blade=new THREE.Mesh(new THREE.BoxGeometry(.14,.9,.5),mat(0x656968));blade.position.set(-.8+i*.8,.0,2.8);blade.rotation.x=-.25;plow.add(blade)}plow.visible=false;
