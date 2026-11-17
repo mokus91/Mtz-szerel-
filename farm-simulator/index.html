@@ -25,9 +25,10 @@
 </div>
 <div id="toast"></div>
 <div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Ingyenes 3D-modellekkel bővülő traktoros játék. A részletesebb külső modell betöltése internetkapcsolatot igényel.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (()=>{
+const startGame=()=>{
+
 const mount=document.getElementById('game');if(!window.THREE){mount.innerHTML='<div style="padding:30px">A 3D motor nem töltődött be. Ellenőrizd az internetkapcsolatot.</div>';return}
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc5d4);scene.fog=new THREE.Fog(0x9fc5d4,75,190);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,300);
@@ -156,5 +157,20 @@ else{const cabEye=new THREE.Vector3(tractor.position.x+Math.sin(heading)*.12,tra
 renderer.render(scene,camera)}
 animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+};
+if(window.THREE){startGame();}else{
+ const sources=[
+  "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+  "https://unpkg.com/three@0.128.0/build/three.min.js"
+ ];
+ const load=(i)=>{
+  if(i>=sources.length){document.getElementById("game").innerHTML='<div style="padding:24px;background:#111;color:white">A 3D motor nem tölthető be. Kapcsold be az internetet, majd frissítsd az oldalt.</div>';return;}
+  const script=document.createElement("script");script.src=sources[i];
+  script.onload=()=>{if(window.THREE)startGame();else load(i+1);};
+  script.onerror=()=>load(i+1);
+  document.head.appendChild(script);
+ };
+ load(0);
+}
 })();
 </script></body></html>
