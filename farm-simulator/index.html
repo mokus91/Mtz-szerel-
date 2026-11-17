@@ -24,8 +24,9 @@
  <div class="cluster"><button class="btn wide" id="view">KAMERA</button><button class="btn wide" id="gearDown">− FOKOZAT</button><button class="btn wide" id="gearUp">+ FOKOZAT</button><button class="btn wide" id="engine">MOTOR BE</button><button class="btn wide" id="lights">LÁMPA</button><button class="btn wide" id="work">MUNKA</button><button class="btn pedal" data-control="brake">FÉK</button><button class="btn pedal" data-control="gas">GÁZ</button></div>
 </div>
 <div id="toast"></div>
-<div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">A játék első, fejlesztés alatt álló változata. A traktor és a gépek 3D-s játékmodellként szerepelnek.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
+<div id="start"><div class="card"><h1>MTZ FARM SIMULATOR</h1><p>Élethű hangulatú, 3D-s traktoros próba-játék.<br>Vezesd az MTZ-t a gazdaságban, és kezdd el a földmunkát!</p><p class="small">Ingyenes 3D-modellekkel bővülő traktoros játék. A részletesebb külső modell betöltése internetkapcsolatot igényel.</p><button class="mainbtn" id="play">JÁTÉK INDÍTÁSA</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 (()=>{
 const mount=document.getElementById('game');if(!window.THREE){mount.innerHTML='<div style="padding:30px">A 3D motor nem töltődött be. Ellenőrizd az internetkapcsolatot.</div>';return}
@@ -103,6 +104,22 @@ const hitch=box(.5,.3,.8,metal,0,.35,0);tractor.remove(hitch);tractor.add(hitch)
 const plow=new THREE.Group();tractor.add(plow);const beam=new THREE.Mesh(new THREE.BoxGeometry(2.6,.12,.18),metal);beam.position.set(0,.35,2.65);plow.add(beam);for(let i=0;i<3;i++){let blade=new THREE.Mesh(new THREE.BoxGeometry(.14,.9,.5),mat(0x656968));blade.position.set(-.8+i*.8,.0,2.8);blade.rotation.x=-.25;plow.add(blade)}plow.visible=false;
 let speed=0,heading=0,money=0,working=false,worked=0,gear=0,engineOn=false,lightsOn=false,steerAngle=0;const controls={left:false,right:false,gas:false,brake:false};let started=false;
 tractor.position.set(0,0,12);
+// Ingyenes, CC0 licencű, részletesebb külső traktor 3D-modell betöltése.
+// Ha a külső fájl nem érhető el, a beépített MTZ-stílusú modell marad használatban.
+const importedModelRoot=new THREE.Group();importedModelRoot.visible=false;tractor.add(importedModelRoot);
+let importedMixer=null;
+const modelNotice=document.createElement("div");modelNotice.style.cssText="position:absolute;top:112px;left:10px;background:#111c;padding:6px 9px;border-radius:7px;font-size:11px;color:#ddd";modelNotice.textContent="3D modell betöltése…";document.body.appendChild(modelNotice);
+if(THREE.GLTFLoader){const loader=new THREE.GLTFLoader();loader.load("https://grab3d.com/dl/tractor/tractor.glb",gltf=>{
+ const model=gltf.scene;model.updateMatrixWorld(true);const bounds=new THREE.Box3().setFromObject(model);const size=bounds.getSize(new THREE.Vector3());
+ // A modellt valós méretű, játékban kezelhető traktor-mérethez igazítjuk.
+ const horizontal=Math.max(size.x,size.z)||1;const scale=4.25/horizontal;model.scale.setScalar(scale);model.updateMatrixWorld(true);
+ const fitted=new THREE.Box3().setFromObject(model);model.position.y-=fitted.min.y;
+ importedModelRoot.add(model);importedModelRoot.visible=true;
+ tractor.children.forEach(child=>{if(child!==importedModelRoot)child.visible=false;});
+ if(gltf.animations&&gltf.animations.length){importedMixer=new THREE.AnimationMixer(model);gltf.animations.forEach(clip=>importedMixer.clipAction(clip).play());}
+ modelNotice.textContent="Külső 3D traktor betöltve • CC0";modelNotice.style.color="#b8e6a0";
+ },undefined,err=>{modelNotice.textContent="Alap MTZ-modell • külső modell nem elérhető";console.warn("A külső traktor modell nem tölthető be:",err);});}
+else{modelNotice.textContent="Alap MTZ-modell • 3D kiegészítő nem elérhető";}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2100)}
 document.querySelectorAll('[data-control]').forEach(b=>{const k=b.dataset.control;const on=e=>{e.preventDefault();controls[k]=true;b.classList.add('active')},off=e=>{e.preventDefault();controls[k]=false;b.classList.remove('active')};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,off))});
 document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';started=true;engineOn=true;document.getElementById('engine').textContent='MOTOR KI';startEngineSound();toast('A motor beindult. Válassz fokozatot!')};
