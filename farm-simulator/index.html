@@ -103,7 +103,8 @@ const hitch=box(.5,.3,.8,metal,0,.35,0);tractor.remove(hitch);tractor.add(hitch)
 const plow=new THREE.Group();tractor.add(plow);const beam=new THREE.Mesh(new THREE.BoxGeometry(2.6,.12,.18),metal);beam.position.set(0,.35,2.65);plow.add(beam);for(let i=0;i<3;i++){let blade=new THREE.Mesh(new THREE.BoxGeometry(.14,.9,.5),mat(0x656968));blade.position.set(-.8+i*.8,.0,2.8);blade.rotation.x=-.25;plow.add(blade)}plow.visible=false;
 let speed=0,heading=0,money=0,working=false,worked=0,gear=0,engineOn=false,lightsOn=false,steerAngle=0;const controls={left:false,right:false,gas:false,brake:false};let started=false;
 tractor.position.set(0,0,12);
-// A beépített MTZ-stílusú traktor mindig megjelenik; nincs hibás külső modellhivatkozás.\nfunction toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2100)}
+// A beépített MTZ-stílusú traktor mindig megjelenik; nincs hibás külső modellhivatkozás.
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2100)}
 document.querySelectorAll('[data-control]').forEach(b=>{const k=b.dataset.control;const on=e=>{e.preventDefault();controls[k]=true;b.classList.add('active')},off=e=>{e.preventDefault();controls[k]=false;b.classList.remove('active')};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,off))});
 document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';started=true;engineOn=true;document.getElementById('engine').textContent='MOTOR KI';startEngineSound();toast('A motor beindult. Válassz fokozatot!')};
 document.getElementById('engine').onclick=()=>{engineOn=!engineOn;if(!engineOn){speed=0;gear=0;working=false;plow.visible=false}else if(!audioCtx)startEngineSound();document.getElementById('engine').textContent=engineOn?'MOTOR KI':'MOTOR BE';toast(engineOn?'Motor beindítva.':'Motor leállítva.')};
@@ -129,7 +130,7 @@ const smokeMat=new THREE.MeshBasicMaterial({color:0x777b7b,transparent:true,opac
 const ambientFill=new THREE.DirectionalLight(0xc5d8e8,.28);ambientFill.position.set(18,12,-25);scene.add(ambientFill);
 const clock=new THREE.Clock();
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);
-if(started){if(importedMixer)importedMixer.update(dt);
+if(started){
 if(engineOn&&gear!==0&&controls.gas){const ratio=[0,1,1.55,2.15,2.8][Math.abs(gear)];const maxSpeed=gear<0?4:Math.max(3,ratio*3.8);speed=Math.min(speed+dt*(2.2/Math.max(1,ratio*.65)),maxSpeed)}
 else if(controls.brake)speed=Math.max(0,speed-dt*7.5);
 else speed*=Math.pow(.992,dt*60);
